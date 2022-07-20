@@ -98,8 +98,8 @@ class V8Conan(ConanFile):
     def configure(self):
         if self.settings.os == "Windows":
             if (self.settings.compiler == "Visual Studio" and
-                    str(self.settings.compiler.version) not in ["15", "16"]):
-                raise ConanInvalidConfiguration("Only Visual Studio 16 is supported.")
+                    str(self.settings.compiler.version) not in ["15", "16", "17"]):
+                raise ConanInvalidConfiguration("Only Visual Studio 15,16,17 is supported.")
 
     def system_requirements(self):
         # TODO this isn't allowed ...
@@ -125,7 +125,14 @@ class V8Conan(ConanFile):
         os.environ["DEPOT_TOOLS_PATH"] = os.path.join(self.source_folder, "depot_tools")
         if self.settings.os == "Windows":
             os.environ["DEPOT_TOOLS_WIN_TOOLCHAIN"] = "0"
-            os.environ["GYP_MSVS_VERSION"] = "2017" if str(self.settings.compiler.version) == "15" else "2019"
+            if str(self.settings.compiler.version) == "15":
+                os.environ["GYP_MSVS_VERSION"] = "2017"
+            elif str(self.settings.compiler.version) == "16":
+                os.environ["GYP_MSVS_VERSION"] = "2019"
+            elif str(self.settings.compiler.version) == "17":
+                os.environ["GYP_MSVS_VERSION"] = "2022"
+            else:
+                raise ConanInvalidConfiguration("Only Visual Studio 15,16,17 is supported.")
         if self.settings.os == "Macos" and self.gn_arch == "arm64":
             os.environ["VPYTHON_BYPASS"] = "manually managed python not supported by chrome operations"
 
