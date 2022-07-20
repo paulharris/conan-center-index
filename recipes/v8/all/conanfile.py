@@ -187,6 +187,12 @@ class V8Conan(ConanFile):
             "//build/config/win:default_crt",
             "//build/config/conan/msvc:conan_crt"
         )
+        # fix bug in BUILD.gn, was defining a header-target as a lib-target
+        build_gn_file = os.path.join(v8_source_root, "BUILD.gn")
+        tools.replace_in_file(build_gn_file,
+            "v8_source_set(\"v8_heap_base_headers\") {",
+            "v8_header_set(\"v8_heap_base_headers\") {"
+        )
 
     def _define_conan_toolchain(self):
         v8_source_root = os.path.join(self.source_folder, "v8")
