@@ -1,0 +1,129 @@
+diff --git a/include/libplatform/libplatform.h b/include/libplatform/libplatform.h
+index 9ec60c04f9..8e66358cc5 100644
+--- a/include/libplatform/libplatform.h
++++ b/include/libplatform/libplatform.h
+@@ -100,6 +100,15 @@ V8_PLATFORM_EXPORT void RunIdleTasks(v8::Platform* platform,
+ V8_PLATFORM_EXPORT void NotifyIsolateShutdown(v8::Platform* platform,
+                                               Isolate* isolate);
+ 
++// number of seconds before the abort is executed (sleeps until then)
++V8_PLATFORM_EXPORT void patch_v8_SetAbortDelay( unsigned int secs );
++
++// notify v8 that it can let its isolates on lifesupport that it is ok to die
++V8_PLATFORM_EXPORT void patch_v8_OkToDie();
++
++// true if v8 has been instructed to abort the whole process
++V8_PLATFORM_EXPORT bool patch_v8_IsAborting();
++
+ }  // namespace platform
+ }  // namespace v8
+ 
+diff --git a/src/base/platform/platform-posix.cc b/src/base/platform/platform-posix.cc
+index 0c1c9d08f0..39b483944f 100644
+--- a/src/base/platform/platform-posix.cc
++++ b/src/base/platform/platform-posix.cc
+@@ -89,6 +89,13 @@ extern "C" void* __libc_stack_end;
+ #endif
+ 
+ namespace v8 {
++
++   namespace platform {
++      extern bool patch_v8_is_aborting;
++      extern bool patch_v8_ok_to_die;
++      extern unsigned int patch_v8_abort_delay_secs;
++   }
++
+ namespace base {
+ 
+ namespace {
+@@ -654,9 +661,23 @@ void OS::Sleep(TimeDelta interval) {
+ 
+ 
+ void OS::Abort() {
++  ::v8::platform::patch_v8_is_aborting = true;
++
++  // check every 10 secs if it is time to die
++  for (unsigned int s = 0;
++        ::v8::platform::patch_v8_abort_delay_secs == 0 or
++        s < ::v8::platform::patch_v8_abort_delay_secs-1;
++        s += 10)
++  {
++     if (::v8::platform::patch_v8_ok_to_die)
++        break;
++     OS::Sleep( TimeDelta::FromSeconds(10) );
++  }
++
+   if (g_hard_abort) {
+     IMMEDIATE_CRASH();
+   }
++
+   // Redirect to std abort to signal abnormal program termination.
+   abort();
+ }
+diff --git a/src/base/platform/platform-win32.cc b/src/base/platform/platform-win32.cc
+index 5df9c3fa0d..2060ad125f 100644
+--- a/src/base/platform/platform-win32.cc
++++ b/src/base/platform/platform-win32.cc
+@@ -131,6 +131,13 @@ int strncpy_s(char* dest, size_t dest_size, const char* source, size_t count) {
+ #endif  // __MINGW32__
+ 
+ namespace v8 {
++
++   namespace platform {
++      extern bool patch_v8_is_aborting;
++      extern bool patch_v8_ok_to_die;
++      extern unsigned int patch_v8_abort_delay_secs;
++   }
++
+ namespace base {
+ 
+ namespace {
+@@ -1130,6 +1137,17 @@ void OS::Abort() {
+   fflush(stdout);
+   fflush(stderr);
+ 
++  // check every 10 secs if it is time to die
++  for (unsigned int s = 0;
++        ::v8::platform::patch_v8_abort_delay_secs == 0 or
++        s < ::v8::platform::patch_v8_abort_delay_secs-1;
++        s += 10)
++  {
++     if (::v8::platform::patch_v8_ok_to_die)
++        break;
++     OS::Sleep( TimeDelta::FromSeconds(10) );
++  }
++
+   if (g_hard_abort) {
+     IMMEDIATE_CRASH();
+   }
+diff --git a/src/libplatform/default-platform.cc b/src/libplatform/default-platform.cc
+index e360c661dd..c4ac5f98e4 100644
+--- a/src/libplatform/default-platform.cc
++++ b/src/libplatform/default-platform.cc
+@@ -275,5 +275,26 @@ void DefaultPlatform::NotifyIsolateShutdown(Isolate* isolate) {
+   }
+ }
+ 
++
++bool patch_v8_is_aborting = false;
++bool patch_v8_ok_to_die = false;
++unsigned int patch_v8_abort_delay_secs = 0;   // 0 = infinite
++
++void patch_v8_OkToDie()
++{
++   patch_v8_ok_to_die = true;
++}
++
++void patch_v8_SetAbortDelay( unsigned int secs )
++{
++   patch_v8_abort_delay_secs = secs;
++}
++
++bool patch_v8_IsAborting()
++{
++   return patch_v8_is_aborting;
++}
++
++
+ }  // namespace platform
+ }  // namespace v8

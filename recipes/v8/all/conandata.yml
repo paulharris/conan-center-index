@@ -1,0 +1,4 @@
+patches:
+  "10.3.174.18":
+    - patch_file: "patches/10.3.174.18-delayed-abort.patch"
+      base_path: "v8"

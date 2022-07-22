@@ -6,6 +6,7 @@ from conan import ConanFile
 # from conans import CMake
 from conans import tools
 from conan.errors import ConanInvalidConfiguration
+from conan.tools.files import apply_conandata_patches
 
 # Notes for manual calls for playing with things:
 #
@@ -59,6 +60,10 @@ class V8Conan(ConanFile):
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
+
+    def export_sources(self):
+        for patch in self.conan_data.get("patches", {}).get(self.version, []):
+            self.copy(patch["patch_file"])
 
     def _check_python_version(self):
         """depot_tools requires python >= 2.7.5 or >= 3.8 for python 3 support."""
@@ -287,6 +292,8 @@ class V8Conan(ConanFile):
 
 
     def build(self):
+        apply_conandata_patches(self)
+
         v8_source_root = os.path.join(self.source_folder, "v8")
         self._set_environment_vars()
 
