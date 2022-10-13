@@ -44,7 +44,7 @@ index 0c1c9d08f0..39b483944f 100644
 +
 +  // check every 10 secs if it is time to die
 +  for (unsigned int s = 0;
-+        ::v8::platform::patch_v8_abort_delay_secs == 0 or
++        ::v8::platform::patch_v8_abort_delay_secs == 0 ||
 +        s < ::v8::platform::patch_v8_abort_delay_secs-1;
 +        s += 10)
 +  {
@@ -84,7 +84,7 @@ index 5df9c3fa0d..2060ad125f 100644
  
 +  // check every 10 secs if it is time to die
 +  for (unsigned int s = 0;
-+        ::v8::platform::patch_v8_abort_delay_secs == 0 or
++        ::v8::platform::patch_v8_abort_delay_secs == 0 ||
 +        s < ::v8::platform::patch_v8_abort_delay_secs-1;
 +        s += 10)
 +  {
