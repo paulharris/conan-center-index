@@ -100,11 +100,27 @@ class V8Conan(ConanFile):
                     "{} or >= {})".format(verstr, py2_min, py2_max, py3_min))
             raise ConanInvalidConfiguration(msg)
 
-    def configure(self):
+    # keep this in sync with _set_environment_vars()
+    # False if not Windows, True if is Windows, will raise Exception if not supported Windows compiler
+    def _uses_msvc_runtime(self):
         if self.settings.os == "Windows":
-            if (self.settings.compiler == "Visual Studio" and
-                    str(self.settings.compiler.version) not in ["15", "16", "17"]):
-                raise ConanInvalidConfiguration("Only Visual Studio 15,16,17 is supported.")
+            if self.settings.compiler == "Visual Studio":
+                if str(self.settings.compiler.version) not in ["15", "16", "17"]:
+                    raise ConanInvalidConfiguration("Only Visual Studio 15,16,17 is supported.")
+                return True
+            elif str(self.settings.compiler) == "msvc":
+                if str(self.settings.compiler.version) not in ["191", "192", "193"]:
+                    raise ConanInvalidConfiguration("Only msvc 191,192,193 is supported (VC 2017,2019,2022 -> 15,16,17 -> 191,192,193).")
+                return True
+            # elif ...
+            #   Add more compilers here, but if we aren't building with the Windows SDK then return false
+            else:
+                raise ConanInvalidConfiguration("Only 'msvc' and 'Visual Studio' compilers currently known to be supported - update recipe.")
+        else:
+            return False
+
+    def configure(self):
+        self._uses_msvc_runtime()   # will raise Exception if invalid
 
     def system_requirements(self):
         # TODO this isn't allowed ...
@@ -130,14 +146,28 @@ class V8Conan(ConanFile):
         os.environ["DEPOT_TOOLS_PATH"] = os.path.join(self.source_folder, "depot_tools")
         if self.settings.os == "Windows":
             os.environ["DEPOT_TOOLS_WIN_TOOLCHAIN"] = "0"
-            if str(self.settings.compiler.version) == "15":
-                os.environ["GYP_MSVS_VERSION"] = "2017"
-            elif str(self.settings.compiler.version) == "16":
-                os.environ["GYP_MSVS_VERSION"] = "2019"
-            elif str(self.settings.compiler.version) == "17":
-                os.environ["GYP_MSVS_VERSION"] = "2022"
+            # keep this in sync with _uses_msvc_runtime()
+            if str(self.settings.compiler) == "Visual Studio":
+                if str(self.settings.compiler.version) == "15":
+                    os.environ["GYP_MSVS_VERSION"] = "2017"
+                elif str(self.settings.compiler.version) == "16":
+                    os.environ["GYP_MSVS_VERSION"] = "2019"
+                elif str(self.settings.compiler.version) == "17":
+                    os.environ["GYP_MSVS_VERSION"] = "2022"
+                else:
+                    raise ConanInvalidConfiguration("Only Visual Studio 15,16,17 is supported.")
+            elif str(self.settings.compiler) == "msvc":
+                if str(self.settings.compiler.version) == "191": # "15":
+                    os.environ["GYP_MSVS_VERSION"] = "2017"
+                elif str(self.settings.compiler.version) == "192": # "16":
+                    os.environ["GYP_MSVS_VERSION"] = "2019"
+                elif str(self.settings.compiler.version) == "193": # "17":
+                    os.environ["GYP_MSVS_VERSION"] = "2022"
+                else:
+                    raise ConanInvalidConfiguration("Only msvc 191,192,193 is supported (VC 2017,2019,2022 -> 15,16,17 -> 191,192,193).")
             else:
-                raise ConanInvalidConfiguration("Only Visual Studio 15,16,17 is supported.")
+                raise ConanInvalidConfiguration("Only 'msvc' and 'Visual Studio' compilers currently known to be supported - update recipe.")
+
         if self.settings.os == "Macos" and self.gn_arch == "arm64":
             os.environ["VPYTHON_BYPASS"] = "manually managed python not supported by chrome operations"
 
@@ -306,7 +336,7 @@ class V8Conan(ConanFile):
             self._path_compiler_config()
 
         with tools.chdir(v8_source_root):
-            if self.settings.os == "Windows" and str(self.settings.compiler) == "Visual Studio":
+            if self._uses_msvc_runtime():
                 self._patch_msvc_runtime()
 
             args = self._gen_arguments()
