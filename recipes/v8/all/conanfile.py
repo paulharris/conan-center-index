@@ -1,12 +1,15 @@
-import os
-import shutil
-import re
-
 from conan import ConanFile
-# from conans import CMake
-from conans import tools
 from conan.errors import ConanInvalidConfiguration
-from conan.tools.files import apply_conandata_patches
+from conan.tools.build import build_jobs
+from conan.tools.files import apply_conandata_patches, export_conandata_patches, chdir, mkdir, replace_in_file
+from conan.tools.scm import Version, Git
+
+import os
+import re
+import shutil
+
+# To update the version, check https://omahaproxy.appspot.com/
+# And find a (stable) v8_version common to linux and win64 (and others)
 
 # Notes for manual calls for playing with things:
 #
@@ -40,11 +43,6 @@ class V8Conan(ConanFile):
             "fPIC":   True,
             }
 
-    # There is no cmake here... 
-    # generators = "cmake"
-
-    # should not be included in CCI recipe... not-allowed-r-evision_mode = "hash"
-
     short_paths = True
 
     # consider this ...
@@ -62,12 +60,11 @@ class V8Conan(ConanFile):
             del self.options.fPIC
 
     def export_sources(self):
-        for patch in self.conan_data.get("patches", {}).get(self.version, []):
-            self.copy(patch["patch_file"])
+        export_conandata_patches(self)
 
     def _check_python_version(self):
         """depot_tools requires python >= 2.7.5 or >= 3.8 for python 3 support."""
-        python_exe = tools.which("python")
+        python_exe = shutil.which("python")
         if not python_exe:
             msg = ("Python must be available in PATH "
                     "in order to build v8")
@@ -75,29 +72,26 @@ class V8Conan(ConanFile):
         # In any case, check its actual version for compatibility
         from six import StringIO  # Python 2 and 3 compatible
         version_buf = StringIO()
-        cmd_v = "\"{}\" --version".format(python_exe)
+        cmd_v = f"\"{python_exe}\" --version"
         self.run(cmd_v, output=version_buf)
+        version_str = version_buf.getvalue().strip()
         p = re.compile(r'Python (\d+\.\d+\.\d+)')
-        verstr = p.match(version_buf.getvalue().strip()).group(1)
+        verstr = p.match(version_str).group(1)
         if verstr.endswith('+'):
             verstr = verstr[:-1]
-        version = tools.Version(verstr)
+        version = Version(verstr)
         # >= 2.7.5 & < 3
         py2_min = "2.7.5"
         py2_max = "3.0.0"
         py3_min = "3.8.0"
         if (version >= py2_min) and (version < py2_max):
-            msg = ("Found valid Python 2 required for v8:"
-                    " version={}, path={}".format(version_buf.getvalue().strip(), python_exe))
+            msg = f"Found valid Python 2 required for v8: version={version_str}, path={python_exe}"
             self.output.success(msg)
         elif version >= py3_min:
-            msg = ("Found valid Python 3 required for v8:"
-                    " version={}, path={}".format(version_buf.getvalue().strip(), python_exe))
+            msg = f"Found valid Python 3 required for v8: version={version_str}, path={python_exe}"
             self.output.success(msg)
         else:
-            msg = ("Found Python in path, but with invalid version {}"
-                    " (v8 requires >= {} and < "
-                    "{} or >= {})".format(verstr, py2_min, py2_max, py3_min))
+            msg = f"Found Python in path, but with invalid version {verstr} (v8 requires >= {py2_min} and < {py2_max} or >= {py3_min})"
             raise ConanInvalidConfiguration(msg)
 
     # keep this in sync with _set_environment_vars()
@@ -125,20 +119,20 @@ class V8Conan(ConanFile):
     def system_requirements(self):
         # TODO this isn't allowed ...
         # if self.settings.os == "Linux":
-            # if not tools.which("lsb-release"):
+            # if not shutil.which("lsb-release"):
                 # tools.not-allowed-S-ystemPackageTool().install("lsb-release")
         self._check_python_version()
 
     def build_requirements(self):
-        if not tools.which("ninja"):
-            self.build_requires("ninja/1.11.0")
+        if not shutil.which("ninja"):
+            self.tool_requires("ninja/1.11.1")
         if self.settings.os != "Windows":
-            if not tools.which("bison"):
-                self.build_requires("bison/3.7.6")
-            if not tools.which("gperf"):
-                self.build_requires("gperf/3.1")
-            if not tools.which("flex"):
-                self.build_requires("flex/2.6.4")
+            if not shutil.which("bison"):
+                self.tool_requires("bison/3.8.2")
+            if not shutil.which("gperf"):
+                self.tool_requires("gperf/3.1")
+            if not shutil.which("flex"):
+                self.tool_requires("flex/2.6.4")
 
     def _set_environment_vars(self):
         """set the environment variables, such that the google tooling is found (including the bundled python2)"""
@@ -172,19 +166,20 @@ class V8Conan(ConanFile):
             os.environ["VPYTHON_BYPASS"] = "manually managed python not supported by chrome operations"
 
     def source(self):
-        tools.Git(folder="depot_tools").clone("https://chromium.googlesource.com/chromium/tools/depot_tools.git",
-                                              shallow=True)
+        git = Git(self)
+        depot_repo = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
+        git.clone(url=depot_repo, target="depot_tools", args=["--depth","1"])
 
         if self.settings.os == "Macos" and self.gn_arch == "arm64":
-            self.run("mkdir v8")
-            with tools.chdir("v8"):
+            mkdir(self, "v8")
+            with chdir(self, "v8"):
                 self.run("echo \"mac-arm64\" > .cipd_client_platform")
 
         self._set_environment_vars()
         # self.run("gclient")   -- does not appear to be necessary
         self.run("fetch v8")
 
-        with tools.chdir("v8"):
+        with chdir(self, "v8"):
             self.run("git checkout {}".format(self.version))
             self.run("gclient sync")
 
@@ -213,7 +208,7 @@ class V8Conan(ConanFile):
         # Always patch over what is there
         # if os.path.exists(os.path.join(dest_folder, "BUILD.gn")):
             # return True
-        tools.mkdir(dest_folder)
+        mkdir(self, dest_folder)
         shutil.copy(
             os.path.join(self.source_folder, source_file),
             os.path.join(dest_folder, "BUILD.gn"))
@@ -225,7 +220,7 @@ class V8Conan(ConanFile):
         msvc_config_folder = os.path.join(v8_source_root, "build", "config", "conan", "msvc")
         self._patch_gn_build_system("v8_msvc_crt.gn", msvc_config_folder)
         config_gn_file = os.path.join(v8_source_root, "build", "config", "BUILDCONFIG.gn")
-        tools.replace_in_file(config_gn_file,
+        replace_in_file(self, config_gn_file,
             "//build/config/win:default_crt",
             "//build/config/conan/msvc:conan_crt"
         )
@@ -234,14 +229,14 @@ class V8Conan(ConanFile):
         # otherwise v8 will assume the old SDK from msvc2019 era
         # v8 wants to only use SDKs that it has tested, but I want to use a newer SDK with 2022
         win_setup_toolchain_file = os.path.join(v8_source_root, "build", "toolchain", "win", "setup_toolchain.py")
-        tools.replace_in_file(win_setup_toolchain_file,
+        replace_in_file(self, win_setup_toolchain_file,
             "10.0.20348.0",
             "10.0.22621.0"
         )
 
         # fix bug in BUILD.gn, was defining a header-target as a lib-target
         build_gn_file = os.path.join(v8_source_root, "BUILD.gn")
-        tools.replace_in_file(build_gn_file,
+        replace_in_file(self, build_gn_file,
             "v8_source_set(\"v8_heap_base_headers\") {",
             "v8_header_set(\"v8_heap_base_headers\") {"
         )
@@ -259,14 +254,14 @@ class V8Conan(ConanFile):
 
         # TRY to remove if previously patched (by previous conan build)
         try:
-            tools.replace_in_file(config_gn_file,
+            replace_in_file(self, config_gn_file,
                 "  \"//build/config/conan/libcxx:conan_libcxx\",\n",
                 ""
             )
         except:
             pass
 
-        tools.replace_in_file(config_gn_file,
+        replace_in_file(self, config_gn_file,
             "default_compiler_configs = [",
             "default_compiler_configs = [\n"
             "  \"//build/config/conan/libcxx:conan_libcxx\",\n"
@@ -335,8 +330,8 @@ class V8Conan(ConanFile):
         if self.settings.os == "Linux" or self.settings.os == "Macos":
             self._path_compiler_config()
 
-        with tools.chdir(v8_source_root):
-            if self._uses_msvc_runtime():
+        with chdir(self, v8_source_root):
+            if self.settings.os == "Windows" and is_msvc(self):
                 self._patch_msvc_runtime()
 
             args = self._gen_arguments()
@@ -344,14 +339,13 @@ class V8Conan(ConanFile):
             with open(args_gn_file, "w") as f:
                 f.write("\n".join(args))
 
-            generator_call = "gn gen {folder}".format(folder=self.build_folder)
+            generator_call = f"gn gen {self.build_folder}"
 
             self.run("python --version")
             print(generator_call)
             self.run(generator_call)
-            # breakpoint()
-            num_parallel = 4 # self.conf_info.get("tools.build:jobs")
-            self.run("ninja -v -j {jobs} -C {folder} v8_monolith".format(jobs=num_parallel, folder=self.build_folder))
+            num_parallel = build_jobs(self)
+            self.run(f"ninja -v -j {num_parallel} -C {self.build_folder} v8_monolith")
 
 
     def package(self):
@@ -376,11 +370,9 @@ class V8Conan(ConanFile):
             # self.cpp_info.cxxflags.append("-std=c++14")
 
         if self.settings.os == "Windows":
-            self.cpp_info.system_libs.append("winmm.lib")
-            self.cpp_info.system_libs.append("dbghelp.lib")
+            self.cpp_info.system_libs.extend(["winmm.lib", "dbghelp.lib"])
             # TODO is this necessary? should not have any STL interfaces exposed?
             # self.cpp_info.defines += [ "_HAS_ITERATOR_DEBUGGING=0" ]
         elif self.settings.os == "Linux":
             self.cpp_info.cxxflags.append("-pthread")
-            self.cpp_info.system_libs.append("pthread")
-            self.cpp_info.system_libs.append("dl")
+            self.cpp_info.system_libs.extend(["pthread","dl"])
