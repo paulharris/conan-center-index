@@ -1,7 +1,6 @@
 patches:
-  "10.3.174.18":
-    - patch_file: "patches/10.3.174.18-delayed-abort.patch"
-      base_path: "v8"
-  "11.0.226.13":
+  "11.0.226.19":
     - patch_file: "patches/11.0.226.13-delayed-abort.patch"
+      base_path: "v8"
+    - patch_file: "patches/11.0.226.13-immediate-crash.patch"
       base_path: "v8"

@@ -2,14 +2,18 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import build_jobs
 from conan.tools.files import apply_conandata_patches, export_conandata_patches, chdir, mkdir, replace_in_file
+from conan.tools.microsoft import check_min_vs, is_msvc_static_runtime, is_msvc, msvc_runtime_flag
 from conan.tools.scm import Version, Git
 
 import os
 import re
 import shutil
 
-# To update the version, check https://omahaproxy.appspot.com/
-# And find a (stable) v8_version common to linux and win64 (and others)
+# To update the version, check https://chromiumdash.appspot.com/branches
+# Choose the appropriate branch (eg the "extended stable" branch),
+# then scroll down to find that branch, and the V8 column.
+# It will be labeled with the git branch name.  Click it.
+# Look at the commit log shown and choose the most recent version number.
 
 # Notes for manual calls for playing with things:
 #
@@ -37,10 +41,12 @@ class V8Conan(ConanFile):
     options = {
             "shared": [True, False],
             "fPIC":   [True, False],
+            # not if doing monolithic # "use_external_startup_data": [True, False],
             }
     default_options = {
             "shared": False,
             "fPIC":   True,
+            # not if doing monolithic # "use_external_startup_data": False,
             }
 
     short_paths = True
@@ -49,7 +55,7 @@ class V8Conan(ConanFile):
     # no_copy_source = True
 
     exports_sources = [
-        "v8_msvc_crt.gn",
+        "v8_msvc.gn",
         "v8_linux_toolchain.gn",
         "v8_libcxx_config.gn"
     ]
@@ -218,11 +224,11 @@ class V8Conan(ConanFile):
         # Do we still need to do this?
         v8_source_root = os.path.join(self.source_folder, "v8")
         msvc_config_folder = os.path.join(v8_source_root, "build", "config", "conan", "msvc")
-        self._patch_gn_build_system("v8_msvc_crt.gn", msvc_config_folder)
+        self._patch_gn_build_system("v8_msvc.gn", msvc_config_folder)
         config_gn_file = os.path.join(v8_source_root, "build", "config", "BUILDCONFIG.gn")
         replace_in_file(self, config_gn_file,
             "//build/config/win:default_crt",
-            "//build/config/conan/msvc:conan_crt"
+            "//build/config/conan/msvc:conan_crt\",\n    \"//build/config/conan/msvc:conan_ignore_warnings"
         )
 
         # Assume the most recent Windows SDK is installed,
@@ -235,11 +241,12 @@ class V8Conan(ConanFile):
         )
 
         # fix bug in BUILD.gn, was defining a header-target as a lib-target
-        build_gn_file = os.path.join(v8_source_root, "BUILD.gn")
-        replace_in_file(self, build_gn_file,
-            "v8_source_set(\"v8_heap_base_headers\") {",
-            "v8_header_set(\"v8_heap_base_headers\") {"
-        )
+# ONLY in older v10 version
+#        build_gn_file = os.path.join(v8_source_root, "BUILD.gn")
+#        replace_in_file(self, build_gn_file,
+#            "v8_source_set(\"v8_heap_base_headers\") {",
+#            "v8_header_set(\"v8_heap_base_headers\") {"
+#        )
 
     def _define_conan_toolchain(self):
         v8_source_root = os.path.join(self.source_folder, "v8")
@@ -268,18 +275,41 @@ class V8Conan(ConanFile):
         )
 
     def _gen_arguments(self):
+        # To look for args: grep -r declare_args v8/build/
+
         # Refer to v8/infra/mb/mb_config.pyl
         # TODO check if we can build Release and link to Debug consumer
-        is_debug = "true" if str(self.settings.build_type) == "Debug" else "false"
+        want_debug = str(self.settings.build_type) == "Debug"
         is_clang = "true" if ("clang" in str(self.settings.compiler).lower()) else "false"
+
         gen_arguments = [
-            "is_debug = " + is_debug,
+            # Notes on how other embedders compile:
+            # https://groups.google.com/a/chromium.org/g/chromium-dev/c/4F5hM8XMOhQ
+
+            # Note from v8/build/config/BUILDCONFIG.gn version 11.0.226.19 (2023-03-16)
+            # IMPORTANT NOTE: (!want_debug) is *not* sufficient to get satisfying
+            # performance. In particular, DCHECK()s are still enabled for release builds,
+            # which can halve overall performance, and do increase memory usage. Always
+            # set "is_official_build" to true for any build intended to ship to end-users.
+            #
+            "is_official_build = %s" % ("false" if want_debug else "true"),
+            # but, this isn't possible unless you are a googler with src-internal checked out
+            #
+            # so, ensure dcheck is off as well
+            "dcheck_always_on = false",
+
+            "is_debug = %s" % ("true" if want_debug else "false"),
 
             # TODO iterator debugging is MUCH slower, probably don't want to enable that.
-            # "enable_iterator_debugging = " + is_debug,
+            # "enable_iterator_debugging = " + ("true" if want_debug else "false")
 
             "target_cpu = \"%s\"" % self.gn_arch,
+
+            # TODO test this, might be faster to link than monolith? for debug cycles
+            # Note: Can't enable this on iOS
+            # This isn't possible with monolith
             "is_component_build = false",
+
             "is_chrome_branded = false",
             "treat_warnings_as_errors = false",
             "is_clang = " + is_clang,
@@ -288,17 +318,71 @@ class V8Conan(ConanFile):
             "use_custom_libcxx = false",
             "use_custom_libcxx_for_host = false",
 
-            # V8 specific settings
+            # monolithic creates one library from the multiple components,
+            # AND includes the external startup data internally (I think)
             "v8_monolithic = true",
-            "v8_static_library = true",
-            "v8_use_external_startup_data = false",
+            # SET BELOW # "v8_static_library = true",
             # "v8_enable_backtrace = false",
+
+            # Keep the number of symbols small
+            # TODO: symbol_level = -1 (auto) 0 (no syms) 1 (minimum syms for backtrace) 2 (full syms)
+            "symbol_level = 0",
+            "v8_symbol_level = 0",
+
+            # Generate an external header with all the necessary external V8 defines
+            "v8_generate_external_defines_header = true",
+
+            # From archlinux: https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=v8-r&id=1c1910e4afeeecccfbfc2cc9459d6d0078a11ab8
+            # Don't enable this, it won't link ... "cppgc_enable_young_generation = true", # some kind of memory optimisation?
+            # Need asan (address sanitizer?) "is_asan = false"
+            # Don't need? "v8_enable_backtrace = true",
+            # Don't need? "v8_enable_disassembler = true",
+            "v8_enable_i18n_support = true",    # might be useful
+            "v8_enable_object_print = true",    # might be useful
+
+            # Don't need? Debugging? "v8_enable_verify_heap = true",
+
+            # Sandbox is not really useful outside of chrome:
+            #
+            # https://groups.google.com/g/v8-reviews/c/WTrM_i2xOco
+            # commit a7329344e52a0af3461aacaa8c538ddf8992e0d6
+            # Author: Samuel Groß <sa...@chromium.org>
+            # Date: Tue Jul 19 11:22:14 2022
+            #
+            # [sandbox] Disable the sandbox by default outside of Chromium builds
+            #
+            # To work properly and securely, the sandbox requires cooperation from the
+            # Embedder, for example in the form of a custom ArrayBufferAllocator and
+            # later on custom type tags for external objects. As such, it likely does
+            # not make sense to enable the sandbox by default everywhere.
+            "v8_enable_sandbox = false",
+
+            # don't leet compiler warnings stop us
+            "treat_warnings_as_errors = false"
         ]
 
         if self.settings.os == "Windows":
             gen_arguments += [
-                "conan_compiler_runtime = \"%s\"" % str(self.settings.compiler.runtime)
+                "target_os = \"win\"",
+                "conan_compiler_runtime = \"%s\"" % str(msvc_runtime_flag(self)),
+
+                # from v8/build/config/win/BUILD.gn v 11.0.226.19 (2023-03-16)
+                # options: app, phone, system, server, desktop
+                # "target_winuwp_family = \"desktop\"",
+                # SHOULD NOT BE REQUIRED, we are building for win, not winuwp (store apps)
+
+                # TODO do we need to set visual_studio_path / _version ... v8/build/win/visual_studio_version.gni
             ]
+
+        # Not possible if doing monolithic
+        gen_arguments += [ "v8_use_external_startup_data = false"  ]
+        # gen_arguments += [
+            # "v8_use_external_startup_data = %s" % ("true" if self.options.use_external_startup_data else "false")
+        # ]
+
+        gen_arguments += [
+            "v8_static_library = %s" % ("false" if self.options.shared else "true")
+        ]
 
         if self.settings.os == "Linux":
             toolchain_to_use = "//build/toolchain/conan/linux:%s_%s" % (self.settings.compiler, self.settings.arch)
@@ -331,13 +415,23 @@ class V8Conan(ConanFile):
             self._path_compiler_config()
 
         with chdir(self, v8_source_root):
-            if self.settings.os == "Windows" and is_msvc(self):
-                self._patch_msvc_runtime()
+            if is_msvc(self):
+                if not is_msvc_static_runtime(self):
+                    self._patch_msvc_runtime()
 
             args = self._gen_arguments()
             args_gn_file = os.path.join(self.build_folder, "args.gn")
             with open(args_gn_file, "w") as f:
                 f.write("\n".join(args))
+
+            mkdir(self, "chrome")
+            with chdir(self, "chrome"):
+                with open("VERSION", "w") as f:
+                    # I don't know the format of this file,
+                    # only that v8/build/compute_build_timestamp.py is expecting
+                    # the 4th line to start with PATCH= and end with a number,
+                    # which it uses to compute an offset from a build date.
+                    f.write("Line 1\nLine 2\nLine 3\nPATCH=0\n")
 
             generator_call = f"gn gen {self.build_folder}"
 

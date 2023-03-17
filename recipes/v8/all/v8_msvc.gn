@@ -10,3 +10,7 @@ config("conan_crt") {
     }
   }
 }
+
+config("conan_ignore_warnings") {
+   cflags = [ "/wd4716" ]
+}
