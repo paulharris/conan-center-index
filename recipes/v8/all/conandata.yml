@@ -4,3 +4,5 @@ patches:
       base_path: "v8"
     - patch_file: "patches/11.0.226.13-immediate-crash.patch"
       base_path: "v8"
+    - patch_file: "patches/11.0.226.13-remembered-set.patch"
+      base_path: "v8"

@@ -293,9 +293,8 @@ class V8Conan(ConanFile):
             # set "is_official_build" to true for any build intended to ship to end-users.
             #
             "is_official_build = %s" % ("false" if want_debug else "true"),
-            # but, this isn't possible unless you are a googler with src-internal checked out
             #
-            # so, ensure dcheck is off as well
+            # and, ensure dcheck is off as well
             "dcheck_always_on = false",
 
             "is_debug = %s" % ("true" if want_debug else "false"),
@@ -321,8 +320,6 @@ class V8Conan(ConanFile):
             # monolithic creates one library from the multiple components,
             # AND includes the external startup data internally (I think)
             "v8_monolithic = true",
-            # SET BELOW # "v8_static_library = true",
-            # "v8_enable_backtrace = false",
 
             # Keep the number of symbols small
             # TODO: symbol_level = -1 (auto) 0 (no syms) 1 (minimum syms for backtrace) 2 (full syms)
@@ -333,8 +330,7 @@ class V8Conan(ConanFile):
             "v8_generate_external_defines_header = true",
 
             # From archlinux: https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=v8-r&id=1c1910e4afeeecccfbfc2cc9459d6d0078a11ab8
-            # Don't enable this, it won't link ... "cppgc_enable_young_generation = true", # some kind of memory optimisation?
-            # Need asan (address sanitizer?) "is_asan = false"
+            # On by default with caged heap, which is enabled by default on x64 ...  "cppgc_enable_young_generation = true",
             # Don't need? "v8_enable_backtrace = true",
             # Don't need? "v8_enable_disassembler = true",
             "v8_enable_i18n_support = true",    # might be useful
@@ -355,10 +351,20 @@ class V8Conan(ConanFile):
             # Embedder, for example in the form of a custom ArrayBufferAllocator and
             # later on custom type tags for external objects. As such, it likely does
             # not make sense to enable the sandbox by default everywhere.
+            #
+            # Specifically, with sandbox enabled, embedders cannot alloc memory and then
+            # wrap it in an ArrayBuffer.  Instead, you would have to copy the memory into
+            # a v8-alloced buffer, or, use v8's allocator to allocate memory that would
+            # eventually be passed to v8.
+            # https://www.electronjs.org/blog/v8-memory-cage
+            #
+            # TODO: We might need to also disable cppgc_enable_caged_heap and young-generation and pointer-compression?
             "v8_enable_sandbox = false",
 
-            # don't leet compiler warnings stop us
-            "treat_warnings_as_errors = false"
+            # don't let compiler warnings stop us
+            "treat_warnings_as_errors = false",
+
+            # TODO Don't enable pointer compression?  Can address more memory?
         ]
 
         if self.settings.os == "Windows":
@@ -375,6 +381,7 @@ class V8Conan(ConanFile):
             ]
 
         # Not possible if doing monolithic
+        # This must be specified.
         gen_arguments += [ "v8_use_external_startup_data = false"  ]
         # gen_arguments += [
             # "v8_use_external_startup_data = %s" % ("true" if self.options.use_external_startup_data else "false")
@@ -455,7 +462,8 @@ class V8Conan(ConanFile):
         self.cpp_info.includedirs.append("include/v8/include")
 
         # Pre-configured settings come with conan-v8
-        self.cpp_info.defines.append("V8_COMPRESS_POINTERS")
+        # TODO Should NOT be required, should instead come from v8.h or similar.
+        # self.cpp_info.defines.append("V8_COMPRESS_POINTERS")
 
         # No, the consumer should be able to choose what C++ std it builds itself with.
         # The library (v8) should validate that the stdcxx is high enough, only.
