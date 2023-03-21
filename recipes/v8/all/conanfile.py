@@ -1,7 +1,7 @@
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import build_jobs
-from conan.tools.files import apply_conandata_patches, export_conandata_patches, chdir, mkdir, replace_in_file
+from conan.tools.files import apply_conandata_patches, export_conandata_patches, chdir, mkdir, replace_in_file, copy
 from conan.tools.microsoft import check_min_vs, is_msvc_static_runtime, is_msvc, msvc_runtime_flag
 from conan.tools.scm import Version, Git
 
@@ -450,20 +450,42 @@ class V8Conan(ConanFile):
 
 
     def package(self):
-        self.copy(pattern="LICENSE*", dst="licenses", src="v8")
-        self.copy(pattern="*v8_monolith.a", dst="lib", keep_path=False)
-        self.copy(pattern="*v8_monolith.lib", dst="lib", keep_path=False)
-        self.copy(pattern="*.h", dst="include/v8/include", src="v8/include", keep_path=True)
+        # licences
+        copy(self, pattern="LICENSE*",
+                dst=os.path.join(self.package_folder, "licenses"),
+                src=os.path.join(self.build_folder, "v8"))
+
+        # linux static library
+        copy(self, pattern="*v8_monolith.a",
+                dst=os.path.join(self.package_folder, "lib"),
+                src=os.path.join(self.build_folder, "obj"),
+                keep_path=False)
+
+        # windows static library
+        copy(self, pattern="*v8_monolith.lib",
+                dst=os.path.join(self.package_folder, "lib"),
+                src=os.path.join(self.build_folder),    # TODO narrow the src to a subfolder
+                keep_path=False)
+
+        # the normal headers
+        copy(self, pattern="*.h",
+                dst=os.path.join(self.package_folder, "include"),
+                src=os.path.join(self.build_folder, "v8", "include"),
+                keep_path=True)
+
+        # headers generated during build
+        copy(self, pattern="*.h",
+            dst=os.path.join(self.package_folder, "include"),
+            src=os.path.join(self.build_folder, "gen", "include"),
+            keep_path=True)
 
 
     def package_info(self):
         self.cpp_info.libs = ["v8_monolith"]
-        self.cpp_info.includedirs.append("include/v8")
-        self.cpp_info.includedirs.append("include/v8/include")
 
-        # Pre-configured settings come with conan-v8
-        # TODO Should NOT be required, should instead come from v8.h or similar.
-        # self.cpp_info.defines.append("V8_COMPRESS_POINTERS")
+        # Embedders must include v8-gn.h,
+        # which will automatically happen if V8_GN_HEADER is defined
+        self.cpp_info.defines.append("V8_GN_HEADER=1")
 
         # No, the consumer should be able to choose what C++ std it builds itself with.
         # The library (v8) should validate that the stdcxx is high enough, only.
