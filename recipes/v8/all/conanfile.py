@@ -39,13 +39,23 @@ class V8Conan(ConanFile):
 
     settings = "os", "compiler", "build_type", "arch"
     options = {
-            "shared": [True, False],
-            "fPIC":   [True, False],
+            "shared":   [True, False],
+            "fPIC":     [True, False],
+            "use_rtti": [True, False],
             # not if doing monolithic # "use_external_startup_data": [True, False],
             }
     default_options = {
-            "shared": False,
-            "fPIC":   True,
+            "shared":   False,
+            "fPIC":     True,
+
+            # Chromium/v8 is built with rtti disabled by default
+            # If you don't HAVE to turn this on, don't turn it on.
+            # You might hit problems if you inherit from v8::ArrayBuffer::Allocator
+            # ie missing type_info
+            # but you can set (for gcc) --no-rtti on that one file with that code,
+            # and everything should (hopefully) link without further problems.
+            "use_rtti": False,
+
             # not if doing monolithic # "use_external_startup_data": False,
             }
 
@@ -299,6 +309,8 @@ class V8Conan(ConanFile):
 
             "is_debug = %s" % ("true" if want_debug else "false"),
 
+            "use_rtti = %s" % ("true" if use_rtti else "false"),
+
             # TODO iterator debugging is MUCH slower, probably don't want to enable that.
             # "enable_iterator_debugging = " + ("true" if want_debug else "false")
 
@@ -365,6 +377,11 @@ class V8Conan(ConanFile):
             "treat_warnings_as_errors = false",
 
             # TODO Don't enable pointer compression?  Can address more memory?
+            # v8_enable_pointer_compression   v8_enable_pointer_compression_8gb
+
+            # TODO consider concurrent_links = NUM to reduce number of parallel linker executions (they consume a lot of memory)
+
+            # TODO check if 'WebAssembly' global is available
         ]
 
         if self.settings.os == "Windows":
