@@ -309,7 +309,7 @@ class V8Conan(ConanFile):
 
             "is_debug = %s" % ("true" if want_debug else "false"),
 
-            "use_rtti = %s" % ("true" if use_rtti else "false"),
+            "use_rtti = %s" % ("true" if self.options.use_rtti else "false"),
 
             # TODO iterator debugging is MUCH slower, probably don't want to enable that.
             # "enable_iterator_debugging = " + ("true" if want_debug else "false")
@@ -380,8 +380,6 @@ class V8Conan(ConanFile):
             # v8_enable_pointer_compression   v8_enable_pointer_compression_8gb
 
             # TODO consider concurrent_links = NUM to reduce number of parallel linker executions (they consume a lot of memory)
-
-            # TODO check if 'WebAssembly' global is available
         ]
 
         if self.settings.os == "Windows":
