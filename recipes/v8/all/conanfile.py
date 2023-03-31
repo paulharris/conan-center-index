@@ -20,10 +20,12 @@ import shutil
 # To check the arguments possible:
 #   cd v8   (the source dir)
 #   ../../depot_tools/gn args --list ..
+#   or, in conan-cache: ../depot_tools/gn args --list ..
 #
 # To generate:
 #   cd v8   (the source dir)
 #   ../../depot_tools/gn gen ..
+#   or, in conan-cache: ../depot_tools/gn gen ..
 #
 # Then to build:
 #   cd v8   (the source dir)
@@ -41,8 +43,10 @@ class V8Conan(ConanFile):
     options = {
             "shared":   [True, False],
             "fPIC":     [True, False],
-            "use_rtti": [True, False],
+            "use_rtti": ["default", True, False],
             # not if doing monolithic # "use_external_startup_data": [True, False],
+            "v8_enable_pointer_compression":        ["default", True, False],
+            "v8_enable_pointer_compression_8gb":    ["default", True, False],
             }
     default_options = {
             "shared":   False,
@@ -54,9 +58,11 @@ class V8Conan(ConanFile):
             # ie missing type_info
             # but you can set (for gcc) --no-rtti on that one file with that code,
             # and everything should (hopefully) link without further problems.
-            "use_rtti": False,
+            "use_rtti": "default",
 
             # not if doing monolithic # "use_external_startup_data": False,
+            "v8_enable_pointer_compression":        "default",
+            "v8_enable_pointer_compression_8gb":    "default",
             }
 
     short_paths = True
@@ -309,8 +315,6 @@ class V8Conan(ConanFile):
 
             "is_debug = %s" % ("true" if want_debug else "false"),
 
-            "use_rtti = %s" % ("true" if self.options.use_rtti else "false"),
-
             # TODO iterator debugging is MUCH slower, probably don't want to enable that.
             # "enable_iterator_debugging = " + ("true" if want_debug else "false")
 
@@ -381,6 +385,15 @@ class V8Conan(ConanFile):
 
             # TODO consider concurrent_links = NUM to reduce number of parallel linker executions (they consume a lot of memory)
         ]
+
+        if self.options.use_rtti != "default":
+            gen_arguments += ["use_rtti = %s" % ("true" if self.options.use_rtti else "false")]
+
+        if self.options.v8_enable_pointer_compression != "default":
+            gen_arguments += ["v8_enable_pointer_compression = %s" % ("true" if self.options.v8_enable_pointer_compression else "false")]
+
+        if self.options.v8_enable_pointer_compression_8gb != "default":
+            gen_arguments += ["v8_enable_pointer_compression_8gb = %s" % ("true" if self.options.v8_enable_pointer_compression_8gb else "false")]
 
         if self.settings.os == "Windows":
             gen_arguments += [
