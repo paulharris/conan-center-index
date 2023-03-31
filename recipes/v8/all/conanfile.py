@@ -45,6 +45,9 @@ class V8Conan(ConanFile):
             "fPIC":     [True, False],
             "use_rtti": ["default", True, False],
             # not if doing monolithic # "use_external_startup_data": [True, False],
+
+            # Disable pointer compression:  Can address more memory.
+            # Note that I was not able to successfully build with the _8gb flag on Linux.
             "v8_enable_pointer_compression":        ["default", True, False],
             "v8_enable_pointer_compression_8gb":    ["default", True, False],
             }
@@ -61,6 +64,7 @@ class V8Conan(ConanFile):
             "use_rtti": "default",
 
             # not if doing monolithic # "use_external_startup_data": False,
+
             "v8_enable_pointer_compression":        "default",
             "v8_enable_pointer_compression_8gb":    "default",
             }
@@ -379,9 +383,6 @@ class V8Conan(ConanFile):
 
             # don't let compiler warnings stop us
             "treat_warnings_as_errors = false",
-
-            # TODO Don't enable pointer compression?  Can address more memory?
-            # v8_enable_pointer_compression   v8_enable_pointer_compression_8gb
 
             # TODO consider concurrent_links = NUM to reduce number of parallel linker executions (they consume a lot of memory)
         ]
