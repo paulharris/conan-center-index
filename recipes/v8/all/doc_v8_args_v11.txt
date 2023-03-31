@@ -1,0 +1,2309 @@
+action_pool_depth
+    Current value (from the default) = -1
+      From //build/toolchain/BUILD.gn:11
+
+    Pool for non goma tasks.
+
+added_rust_stdlib_libs
+    Current value (from the default) = []
+      From //build/config/rust.gni:49
+
+    Any extra std rlibs in your Rust toolchain, relative to the standard
+    Rust toolchain. Typically used with 'use_unverified_rust_toolchain' = true
+
+also_build_ash_chrome
+    Current value (from the default) = false
+      From //build/config/chromeos/ui_mode.gni:26
+
+    Setting this to true when building linux Lacros-chrome will cause it to
+    *also* build linux ash-chrome in a subdirectory using an alternate
+    toolchain.
+    Don't set this unless you're sure you want it, because it'll double
+    your build time.
+
+also_build_lacros_chrome
+    Current value (from the default) = false
+      From //build/config/chromeos/ui_mode.gni:30
+
+    Setting this to true when building linux ash-chrome will cause it to
+    *also* build linux Lacros-chrome in a subdirectory using an alternate toolchain.
+
+also_build_lacros_chrome_for_architecture
+    Current value (from the default) = ""
+      From //build/config/chromeos/ui_mode.gni:35
+
+    Setting this when building ash-chrome will cause it to
+    *also* build Lacros-chrome in a subdirectory using an alternate toolchain.
+    You can set this to either "amd64" or "arm".
+
+android_full_debug
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:60
+
+    Normally, Android builds are lightly optimized, even for debug builds, to
+    keep binary size down. Setting this flag to true disables such optimization
+
+archive_seed_corpus
+    Current value (from the default) = true
+      From //build/config/sanitizers/sanitizers.gni:105
+
+    When true, seed corpora archives are built.
+
+auto_profile_path
+    Current value (from the default) = ""
+      From //build/config/compiler/BUILD.gn:86
+
+    AFDO (Automatic Feedback Directed Optimizer) is a form of profile-guided
+    optimization that GCC supports. It used by ChromeOS in their official
+    builds. To use it, set auto_profile_path to the path to a file containing
+    the needed gcov profiling data.
+
+branding_file_path
+    Current value (from the default) = "//chrome/app/theme/chromium/BRANDING"
+      From //build/config/chrome_build.gni:63
+
+    The path to the BRANDING file in chrome/app/theme.
+
+branding_path_component
+    Current value (from the default) = "chromium"
+      From //build/config/chrome_build.gni:56
+
+branding_path_product
+    Current value (from the default) = "chromium"
+      From //build/config/chrome_build.gni:57
+
+cc_wrapper
+    Current value (from the default) = ""
+      From //build/toolchain/cc_wrapper.gni:37
+
+    Set to "ccache", "icecc" or "distcc".  Probably doesn't work on windows.
+
+chrome_pgo_phase
+    Current value (from the default) = 2
+      From //build/config/compiler/pgo/pgo.gni:29
+
+chromeos_afdo_platform
+    Current value (from the default) = "atom"
+      From //build/config/compiler/BUILD.gn:106
+
+    This configuration is used to select a default profile in Chrome OS based on
+    the microarchitectures we are using. This is only used if
+    clang_use_default_sample_profile is true and clang_sample_profile_path is
+    empty.
+
+chromeos_is_browser_only
+    Current value (from the default) = false
+      From //build/config/chromeos/ui_mode.gni:19
+
+    Deprecated, use is_chromeos_lacros.
+   
+    This controls UI configuration for Chrome.
+    If this flag is set, we assume Chrome runs on Chrome OS devices, using
+    Wayland (instead of X11).
+   
+    TODO(crbug.com/1052397):
+    Define chromeos_product instead, which takes either "browser" or "ash".
+    Re-define the following variables as:
+    is_chromeos_lacros = chromeos_product == "browser"
+    is_chromeos_ash = chromeos_product == "ash"
+
+clang_base_path
+    Current value (from the default) = "//third_party/llvm-build/Release+Asserts"
+      From //build/config/clang/clang.gni:17
+
+clang_diagnostic_dir
+    Current value (from the default) = "v8/tools/clang/crashreports"
+      From //build/config/compiler/compiler.gni:128
+
+clang_emit_debug_info_for_profiling
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:110
+
+    Emit debug information for profiling wile building with clang.
+    Only enable this for ChromeOS official builds for AFDO.
+
+clang_sample_profile_path
+    Current value (from the default) = ""
+      From //build/config/compiler/BUILD.gn:90
+
+    Path to an AFDO profile to use while building with clang, if any. Empty
+    implies none.
+
+clang_use_chrome_plugins
+    Current value (from the default) = false
+      From //build/config/clang/clang.gni:14
+
+clang_use_default_sample_profile
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:99
+
+clang_version
+    Current value (from the default) = "16"
+      From //build/toolchain/toolchain.gni:36
+
+compiler_timing
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:113
+
+    Turn this on to have the compiler output extra timing information.
+
+conan_compiler_libcxx
+    Current value = "libstdc++11"
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:27
+    Overridden from the default = "libstdc++"
+      From //build/config/conan/libcxx/BUILD.gn:3
+
+conan_compiler_name
+    Current value = "gcc"
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:26
+    Overridden from the default = "gcc"
+      From //build/config/conan/libcxx/BUILD.gn:2
+
+concurrent_links
+    Current value (from the default) = -1
+      From //build/toolchain/concurrent_links.gni:23
+
+    Limit the number of concurrent links; we often want to run fewer
+    links at once than we do compiles, because linking is memory-intensive.
+    The default to use varies by platform and by the amount of memory
+    available, so we call out to a script to get the right value.
+
+coverage_instrumentation_input_file
+    Current value (from the default) = ""
+      From //build/config/coverage/coverage.gni:36
+
+    The path to the coverage instrumentation input file should be a source root
+    absolute path (e.g. //out/Release/coverage_instrumentation_input.txt), and
+    the file consists of multiple lines where each line represents a path to a
+    source file, and the paths must be relative to the root build directory.
+    e.g. ../../base/task/post_task.cc for build directory 'out/Release'.
+   
+    NOTE that this arg will be non-op if use_clang_coverage is false.
+
+cppgc_allow_allocations_in_prefinalizers
+    Current value (from the default) = false
+      From //BUILD.gn:306
+
+    Enable allocations during prefinalizer invocations.
+
+cppgc_enable_2gb_cage
+    Current value (from the default) = false
+      From //gni/v8.gni:105
+
+    Enable 2gb cage for fast compression/decompression. Currently disabled
+    due to an increased number of OOMs.
+
+cppgc_enable_caged_heap
+    Current value (from the default) = true
+      From //BUILD.gn:299
+
+cppgc_enable_object_names
+    Current value (from the default) = false
+      From //gni/v8.gni:95
+
+    Enable object names in cppgc for debug purposes.
+
+cppgc_enable_pointer_compression
+    Current value (from the default) = false
+      From //gni/v8.gni:101
+
+    Enable pointer compression in cppgc.
+
+cppgc_enable_verify_heap
+    Current value (from the default) = ""
+      From //BUILD.gn:303
+
+    Enables additional heap verification phases and checks.
+
+cppgc_enable_young_generation
+    Current value (from the default) = false
+      From //gni/v8.gni:98
+
+    Enable young generation in cppgc.
+
+cppgc_is_standalone
+    Current value (from the default) = false
+      From //gni/v8.gni:92
+
+cros_board
+    Current value (from the default) = ""
+      From //build/config/chromeos/args.gni:8
+
+    This is used only by Simple Chrome to bind its value to test-runner scripts
+    generated at build-time.
+
+cros_sdk_version
+    Current value (from the default) = ""
+      From //build/config/chromeos/args.gni:12
+
+    Similar to cros_board above, this used only by test-runner scripts in
+    Simple Chrome.
+
+current_cpu
+    Current value (from the default) = ""
+      (Internally set; try `gn help current_cpu`.)
+
+current_os
+    Current value (from the default) = ""
+      (Internally set; try `gn help current_os`.)
+
+custom_toolchain
+    Current value = "//build/toolchain/conan/linux:gcc_x86_64"
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:24
+    Overridden from the default = ""
+      From //build/config/BUILDCONFIG.gn:147
+
+    Allows the path to a custom target toolchain to be injected as a single
+    argument, and set as the default toolchain.
+
+dcheck_always_on
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:2
+    Overridden from the default = false
+      From //build/config/dcheck_always_on.gni:25
+
+dcheck_is_configurable
+    Current value (from the default) = false
+      From //build/config/dcheck_always_on.gni:14
+
+    Enables DCHECKs to be built-in, but to default to being non-fatal/log-only.
+    DCHECKS can then be set as fatal/non-fatal via the "DcheckIsFatal" feature.
+    See https://bit.ly/dcheck-albatross for details on how this is used.
+
+disable_libfuzzer
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:83
+
+    Helper variable for testing builds with disabled libfuzzer.
+    Not for client use.
+
+enable_call_graph_profile_sort
+    Current value (from the default) = true
+      From //build/config/compiler/BUILD.gn:151
+
+    Turn off the --call-graph-profile-sort flag for lld by default. Enable
+    selectively for targets where it's beneficial.
+
+enable_cast_audio_renderer
+    Current value (from the default) = false
+      From //build/config/chromecast_build.gni:26
+
+    True to enable the cast audio renderer.
+   
+    TODO(crbug.com/1293520): Remove this buildflag.
+
+enable_cast_receiver
+    Current value (from the default) = false
+      From //build/config/chromecast_build.gni:44
+
+    Set this true for a Chromecast build. Chromecast builds are supported on
+    Linux, Android, ChromeOS, and Fuchsia.
+
+enable_cast_renderer
+    Current value (from the default) = false
+      From //build/config/chromecast_build.gni:53
+
+enable_cet_shadow_stack
+    Current value (from the default) = true
+      From //build/config/compiler/compiler.gni:135
+
+    Mark binaries as compatible with Shadow Stack of Control-flow Enforcement
+    Technology (CET). If Windows version and hardware supports the feature and
+    it's enabled by OS then additional validation of return address will be
+    performed as mitigation against Return-oriented programming (ROP).
+    https://chromium.googlesource.com/chromium/src/+/main/docs/design/sandbox.md#cet-shadow-stack
+
+enable_dsyms
+    Current value (from the default) = true
+      From //build/config/apple/symbols.gni:17
+
+    Produce dSYM files for targets that are configured to do so. dSYM
+    generation is controlled globally as it is a linker output (produced via
+    the //build/toolchain/apple/linker_driver.py. Enabling this will result in
+    all shared library, loadable module, and executable targets having a dSYM
+    generated.
+
+enable_expensive_dchecks
+    Current value (from the default) = false
+      From //build/config/dcheck_always_on.gni:30
+
+    Set to false to disable EXPENSIVE_DCHECK()s.
+
+enable_full_stack_frames_for_profiling
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:67
+
+    Compile in such a way as to make it possible for the profiler to unwind full
+    stack frames. Setting this flag has a large effect on the performance of the
+    generated code than just setting profiling, but gives the profiler more
+    information to analyze.
+    Requires profiling to be set to true.
+
+enable_iterator_debugging
+    Current value (from the default) = false
+      From //build/config/c++/c++.gni:41
+
+    When set, enables libc++ debug mode with iterator debugging.
+   
+    Iterator debugging is generally useful for catching bugs. But it can
+    introduce extra locking to check the state of an iterator against the state
+    of the current object. For iterator- and thread-heavy code, this can
+    significantly slow execution - two orders of magnitude slowdown has been
+    seen (crbug.com/903553) and iterator debugging also slows builds by making
+    generation of snapshot_blob.bin take ~40-60 s longer. Therefore this
+    defaults to off.
+
+enable_modular_updater
+    Current value (from the default) = false
+      From //build/config/chromecast_build.gni:21
+
+    Set true to enable modular_updater.
+
+enable_opengl_apitrace
+    Current value (from the default) = false
+      From //build/config/ozone.gni:34
+
+    Enable explicit apitrace (https://apitrace.github.io) loading.
+    This requires apitrace library with additional bindings.
+    See ChromeOS package for details:
+    https://chromium-review.googlesource.com/c/chromiumos/overlays/chromiumos-overlay/+/2659419
+    Chrome will not start without an apitrace.so library.
+    Trace will be saved to /tmp/gltrace.dat file by default. You can
+    override it at run time with TRACE_FILE=<path> environment variable.
+
+enable_precompiled_headers
+    Current value (from the default) = false
+      From //build/config/pch.gni:14
+
+enable_profiling
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:69
+
+    Compile in such a way as to enable profiling of the generated code. For
+    example, don't omit the frame pointer and leave in symbols.
+
+enable_resource_allowlist_generation
+    Current value (from the default) = false
+      From //build/toolchain/gcc_toolchain.gni:28
+
+enable_rust
+    Current value (from the default) = false
+      From //build/config/rust.gni:17
+
+    Whether to allow Rust code to be part of the Chromium *build process*.
+    This can be used to create Rust test binaries, even if the flag below
+    is false.
+
+enable_rust_json
+    Current value (from the default) = true
+      From //build/config/rust.gni:22
+
+    Individual Rust components.
+   
+    The base::JSONReader implementation.
+
+enable_segment_heap
+    Current value (from the default) = false
+      From //build/config/win/manifest.gni:46
+
+enable_stripping
+    Current value (from the default) = true
+      From //build/config/apple/symbols.gni:24
+
+    Strip symbols from linked targets by default. If this is enabled, the
+    //build/config/mac:strip_all config will be applied to all linked targets.
+    If custom stripping parameters are required, remove that config from a
+    linked target and apply custom -Wcrl,strip flags. See
+    //build/toolchain/apple/linker_driver.py for more information.
+
+exclude_unwind_tables
+    Current value (from the default) = true
+      From //build/config/compiler/compiler.gni:124
+
+    Exclude unwind tables by default for official builds as unwinding can be
+    done from stack dumps produced by Crashpad at a later time "offline" in the
+    crash server. Since this increases binary size, we don't recommend including
+    them in shipping builds.
+    For unofficial (e.g. development) builds and non-Chrome branded (e.g. Cronet
+    which doesn't use Crashpad, crbug.com/479283) builds it's useful to be able
+    to unwind at runtime.
+    Include the unwind tables on Android even for official builds, as otherwise
+    the crash dumps generated by Android's debuggerd are largely useless, and
+    having this additional mechanism to understand issues is particularly helpful
+    to WebView.
+
+fatal_linker_warnings
+    Current value (from the default) = true
+      From //build/config/compiler/BUILD.gn:75
+
+    Enable fatal linker warnings. Building Chromium with certain versions
+    of binutils can cause linker warning.
+
+forbid_non_component_debug_builds
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:111
+
+    Whether an error should be raised on attempts to make debug builds with
+    is_component_build=false. Very large debug symbols can have unwanted side
+    effects so this is enforced by default for chromium.
+
+gcc_target_rpath
+    Current value (from the default) = ""
+      From //build/config/gcc/BUILD.gn:19
+
+    When non empty, overrides the target rpath value. This allows a user to
+    make a Chromium build where binaries and shared libraries are meant to be
+    installed into separate directories, like /usr/bin/chromium and
+    /usr/lib/chromium for instance. It is useful when a build system that
+    generates a whole target root filesystem (like Yocto) is used on top of gn,
+    especially when cross-compiling.
+    Note: this gn arg is similar to gyp target_rpath generator flag.
+
+generate_fuzzer_owners
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:162
+
+    Generates an owners file for each fuzzer test.
+    TODO(crbug.com/1194183): Remove this arg when finding OWNERS is faster.
+
+generate_linker_map
+    Current value (from the default) = false
+      From //build/toolchain/toolchain.gni:21
+
+    Used for binary size analysis.
+
+gold_path
+    Current value (from the default) = ""
+      From //build/config/compiler/BUILD.gn:71
+
+    When we are going to use gold we need to find it.
+    This is initialized below, after use_gold might have been overridden.
+
+goma_dir
+    Current value (from the default) = ""
+      From //build/toolchain/goma.gni:17
+
+    Absolute directory containing the gomacc binary.
+
+host_byteorder
+    Current value (from the default) = "undefined"
+      From //build/config/host_byteorder.gni:9
+
+host_cpu
+    Current value (from the default) = "x64"
+      (Internally set; try `gn help host_cpu`.)
+
+host_os
+    Current value (from the default) = "linux"
+      (Internally set; try `gn help host_os`.)
+
+host_pkg_config
+    Current value (from the default) = ""
+      From //build/config/linux/pkg_config.gni:36
+
+    A optional pkg-config wrapper to use for tools built on the host.
+
+host_toolchain
+    Current value = "//build/toolchain/conan/linux:gcc_x86_64"
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:25
+    Overridden from the default = ""
+      From //build/config/BUILDCONFIG.gn:151
+
+    This should not normally be set as a build argument.  It's here so that
+    every toolchain can pass through the "global" value via toolchain_args().
+
+icu_disable_thin_archive
+    Current value (from the default) = false
+      From //third_party/icu/config.gni:17
+
+    If true, compile icu into a standalone static library. Currently this is
+    only useful on Chrome OS.
+
+icu_fuchsia_override_data_dir
+    Current value (from the default) = ""
+      From //third_party/icu/config.gni:22
+
+    If set to nonempty, this is the label of the directory to be used to pull
+    the ICU data files content.  The setting has effect only when building
+    inside the Fuchsia source tree.
+
+icu_use_data_file
+    Current value (from the default) = true
+      From //third_party/icu/config.gni:8
+
+    Tells icu to load an external data file rather than rely on the icudata
+    being linked directly into the binary.
+
+icu_use_stub_data
+    Current value (from the default) = true
+      From //third_party/icu/config.gni:13
+
+    If true, then this creates a stub data file. This should be disabled if
+    a custom data file will be used instead, in order to avoid conflicting
+    symbols.
+
+init_stack_vars
+    Current value (from the default) = true
+      From //build/config/compiler/BUILD.gn:138
+
+    Initialize all local variables with a pattern. This flag will fill
+    uninitialized floating-point types (and 32-bit pointers) with 0xFF and the
+    rest with 0xAA. This makes behavior of uninitialized memory bugs consistent,
+    recognizable in the debugger, and crashes on memory accesses through
+    uninitialized pointers.
+   
+    TODO(crbug.com/1131993): This regresses binary size by ~1MB on Android and
+    needs to be evaluated before enabling it there as well.
+
+ios_deployment_target
+    Current value (from the default) = "14.0"
+      From //build/config/ios/ios_sdk_overrides.gni:10
+
+    Version of iOS that we're targeting.
+
+is_asan
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:14
+
+    Compile for Address Sanitizer to find memory bugs.
+
+is_cast_android
+    Current value (from the default) = false
+      From //build/config/chromecast_build.gni:34
+
+    Set this to true to build for Android-based Cast devices.
+    Set this to false to use the defaults for Android.
+
+is_cast_audio_only
+    Current value (from the default) = false
+      From //build/config/chromecast_build.gni:14
+
+    Set this true for an audio-only Chromecast build.
+    TODO(crbug.com/1293538): Replace with a buildflag for speaker-only builds not
+    specific to Cast.
+
+is_castos
+    Current value (from the default) = false
+      From //build/config/chromecast_build.gni:30
+
+    Set this to true to build for Nest hardware running Linux (aka "CastOS").
+    Set this to false to use the defaults for Linux.
+
+is_cfi
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:50
+
+    Compile with Control Flow Integrity to protect virtual calls and casts.
+    See http://clang.llvm.org/docs/ControlFlowIntegrity.html
+   
+    TODO(pcc): Remove this flag if/when CFI is enabled in all official builds.
+
+is_chrome_branded
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:7
+    Overridden from the default = false
+      From //build/config/chrome_build.gni:9
+
+    Select the desired branding flavor. False means normal Chromium branding,
+    true means official Google Chrome branding (requires extra Google-internal
+    resources).
+
+is_chrome_for_testing_branded
+    Current value (from the default) = false
+      From //build/config/chrome_build.gni:19
+
+    Whether to enable the Chrome for Testing (CfT) branding flavor. This flag
+    is not compatible with `is_chrome_branded`, therefore both of them cannot
+    be simultaneously enabled.
+   
+    Note: CfT is not intended to be used as a test runner to run tests in this
+    repository.
+   
+    Design document: https://goo.gle/chrome-for-testing
+
+is_chromeos_device
+    Current value (from the default) = false
+      From //build/config/chromeos/args.gni:26
+
+    Determines if we're building for a Chrome OS device (or VM) and not just
+    linux-chromeos. NOTE: Most test targets in Chrome expect to run under
+    linux-chromeos, so some have compile-time asserts that intentionally fail
+    when this build flag is set. Build and run the tests for linux-chromeos
+    instead.
+    https://chromium.googlesource.com/chromium/src/+/main/docs/chromeos_build_instructions.md
+    https://chromium.googlesource.com/chromiumos/docs/+/main/simple_chrome_workflow.md
+
+is_chromeos_with_hw_details
+    Current value (from the default) = false
+      From //build/config/chromeos/args.gni:34
+
+    Determines if we collect hardware information in chrome://system and
+    feedback logs. A similar build flag "hw_details" is defined in Chrome OS
+    (see https://crrev.com/c/3123455).
+
+is_clang
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:9
+    Overridden from the default = true
+      From //build/config/BUILDCONFIG.gn:139
+
+    Set to true when compiling with the Clang compiler.
+
+is_component_build
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:6
+    Overridden from the default = false
+      From //build/config/BUILDCONFIG.gn:173
+
+    Component build. Setting to true compiles targets declared as "components"
+    as shared libraries loaded dynamically. This speeds up development time.
+    When false, components will be linked statically.
+   
+    For more information see
+    https://chromium.googlesource.com/chromium/src/+/main/docs/component_build.md
+
+is_debug
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:3
+    Overridden from the default = false
+      From //build/config/BUILDCONFIG.gn:163
+
+    Debug build. Enabling official builds automatically sets is_debug to false.
+
+is_high_end_android
+    Current value (from the default) = false
+      From //build/config/chrome_build.gni:29
+
+    Set to true to enable settings for high end Android devices, typically
+    enhancing speed at the expense of resources such as binary sizes and memory.
+
+is_hwasan
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:19
+
+    Compile for Hardware-Assisted Address Sanitizer to find memory bugs
+    (android/arm64 only).
+    See http://clang.llvm.org/docs/HardwareAssistedAddressSanitizerDesign.html
+
+is_lsan
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:22
+
+    Compile for Leak Sanitizer to find leaks.
+
+is_msan
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:25
+
+    Compile for Memory Sanitizer to find uninitialized reads.
+
+is_official_build
+    Current value = true
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:1
+    Overridden from the default = false
+      From //build/config/BUILDCONFIG.gn:136
+
+    Set to enable the official build level of optimization. This has nothing
+    to do with branding, but enables an additional level of optimization above
+    release (!is_debug). This might be better expressed as a tri-state
+    (debug, release, official) but for historical reasons there are two
+    separate flags.
+   
+    IMPORTANT NOTE: (!is_debug) is *not* sufficient to get satisfying
+    performance. In particular, DCHECK()s are still enabled for release builds,
+    which can halve overall performance, and do increase memory usage. Always
+    set "is_official_build" to true for any build intended to ship to end-users.
+
+is_on_release_branch
+    Current value (from the default) = true
+      From //gni/release_branch_toggle.gni:6
+
+is_reven
+    Current value (from the default) = false
+      From //build/config/chromeos/args.gni:40
+
+    Refers to the separate branding required for the reven build.
+
+is_robolectric
+    Current value (from the default) = false
+      From //build/config/BUILDCONFIG.gn:156
+
+    Do not set this directly.
+    It should be set only by //build/toolchains/android:robolectric_x64.
+    True when compiling native code for use with robolectric_binary().
+
+is_skylab
+    Current value (from the default) = false
+      From //build/config/chromeos/args.gni:29
+
+    Determines if we run the test in skylab, aka the CrOS labs.
+
+is_tsan
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:28
+
+    Compile for Thread Sanitizer to find threading bugs.
+
+is_ubsan
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:32
+
+    Compile for Undefined Behaviour Sanitizer to find various types of
+    undefined behaviour (excludes vptr checks).
+
+is_ubsan_no_recover
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:35
+
+    Halt the program if a problem is detected.
+
+is_ubsan_security
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:79
+
+    Enables core ubsan security features. Will later be removed once it matches
+    is_ubsan.
+
+is_ubsan_vptr
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:115
+
+    Compile for Undefined Behaviour Sanitizer's vptr checks.
+
+ldso_path
+    Current value (from the default) = ""
+      From //build/config/gcc/BUILD.gn:20
+
+libcxx_is_shared
+    Current value (from the default) = false
+      From //build/config/c++/c++.gni:55
+
+    WARNING: Setting this to a non-default value is highly discouraged.
+    If true, libc++ will be built as a shared library; otherwise libc++ will be
+    linked statically. Setting this to something other than the default is
+    unsupported and can be broken by libc++ rolls. Note that if this is set to
+    true, you must also set libcxx_abi_unstable=false, which is bad for
+    performance and memory use.
+
+libcxx_natvis_include
+    Current value (from the default) = true
+      From //build/config/c++/c++.gni:30
+
+    Builds libcxx Natvis into the symbols for type visualization.
+    Set to false to workaround http://crbug.com/966676 and
+    http://crbug.com/966687.
+
+lld_path
+    Current value (from the default) = "v8/third_party/llvm-build/Release+Asserts/bin"
+      From //build/config/compiler/BUILD.gn:50
+
+    This allows overriding the location of lld.
+
+llvm_force_head_revision
+    Current value (from the default) = false
+      From //build/toolchain/toolchain.gni:18
+
+    If this is set to true, we use the revision in the llvm repo to determine
+    the CLANG_REVISION to use, instead of the version hard-coded into
+    //tools/clang/scripts/update.py. This should only be used in
+    conjunction with setting the llvm_force_head_revision DEPS variable when
+    `gclient runhooks` is run as well.
+
+mac_sdk_min
+    Current value (from the default) = "10.15"
+      From //build/config/mac/mac_sdk_overrides.gni:12
+
+mips_use_mmi
+    Current value (from the default) = false
+      From //build/config/mips.gni:13
+
+    MIPS MultiMedia Instruction compilation flag.
+
+msan_track_origins
+    Current value (from the default) = 2
+      From //build/config/sanitizers/sanitizers.gni:40
+
+    Track where uninitialized memory originates from. From fastest to slowest:
+    0 - no tracking, 1 - track only the initial allocation site, 2 - track the
+    chain of stores leading from allocation site to use site.
+
+needs_gomacc_path_arg
+    Current value (from the default) = false
+      From //build/toolchain/goma.gni:14
+
+    This flag is for ChromeOS compiler wrapper.
+    By passing gomacc path via cmd-line arg, ChromeOS' compiler wrapper
+    invokes gomacc inside it.
+
+optimize_for_fuzzing
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:87
+
+    Optimize for coverage guided fuzzing (balance between speed and number of
+    branches). Can be also used to remove non-determinism and other issues.
+
+optimize_for_size
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:42
+
+ozone_auto_platforms
+    Current value (from the default) = true
+      From //build/config/ozone.gni:21
+
+    Select platforms automatically. Turn this off for manual control.
+
+ozone_extra_path
+    Current value (from the default) = "//build/config/ozone_extra.gni"
+      From //build/config/ozone.gni:18
+
+    Ozone extra platforms file path. Can be overridden to build out of
+    tree ozone platforms.
+
+ozone_platform
+    Current value (from the default) = "x11"
+      From //build/config/ozone.gni:91
+
+ozone_platform_cast
+    Current value (from the default) = false
+      From //build/config/ozone.gni:43
+
+    Compile the 'cast' platform.
+
+ozone_platform_drm
+    Current value (from the default) = false
+      From //build/config/ozone.gni:46
+
+    Compile the 'drm' platform.
+
+ozone_platform_flatland
+    Current value (from the default) = false
+      From //build/config/ozone.gni:55
+
+    Compile the 'flatland' platform.
+
+ozone_platform_gbm
+    Current value (from the default) = -1
+      From //build/config/ozone.gni:25
+
+    TODO(petermcneeley): Backwards compatiblity support for VM images.
+    Remove when deprecated. (https://crbug.com/1122009)
+
+ozone_platform_headless
+    Current value (from the default) = true
+      From //build/config/ozone.gni:66
+
+ozone_platform_scenic
+    Current value (from the default) = false
+      From //build/config/ozone.gni:52
+
+    Compile the 'scenic' platform.
+
+ozone_platform_wayland
+    Current value (from the default) = true
+      From //build/config/ozone.gni:92
+
+ozone_platform_x11
+    Current value (from the default) = true
+      From //build/config/ozone.gni:93
+
+pgo_data_path
+    Current value (from the default) = ""
+      From //build/config/compiler/pgo/pgo.gni:33
+
+    When using chrome_pgo_phase = 2, read profile data from this path.
+
+pkg_config
+    Current value (from the default) = ""
+      From //build/config/linux/pkg_config.gni:33
+
+    A pkg-config wrapper to call instead of trying to find and call the right
+    pkg-config directly. Wrappers like this are common in cross-compilation
+    environments.
+    Leaving it blank defaults to searching PATH for 'pkg-config' and relying on
+    the sysroot mechanism to find the right .pc files.
+
+proprietary_codecs
+    Current value (from the default) = false
+      From //build/config/features.gni:31
+
+    Enables proprietary codecs and demuxers; e.g. H264, AAC, MP3, and MP4.
+    We always build Google Chrome and Chromecast with proprietary codecs.
+   
+    Note: this flag is used by WebRTC which is DEPSed into Chrome. Moving it
+    out of //build will require using the build_overrides directory.
+   
+    Do not add any other conditions to the following line.
+   
+    TODO(crbug.com/1314528): Remove chromecast-related conditions and force
+    builds to explicitly specify this.
+
+rbe_cc_cfg_file
+    Current value (from the default) = "v8/buildtools/reclient_cfgs/chromium-browser-clang/rewrapper_linux.cfg"
+      From //build/toolchain/rbe.gni:29
+
+rbe_cfg_dir
+    Current value (from the default) = "v8/buildtools/reclient_cfgs"
+      From //build/toolchain/rbe.gni:20
+
+    The directory where the re-client configuration files are.
+
+rbe_cros_cc_wrapper
+    Current value (from the default) = "v8/buildtools/reclient/rewrapper"
+      From //build/toolchain/rbe.gni:48
+
+    Set to the path of the RBE recleint wrapper for ChromeOS.
+
+rbe_link_cfg_file
+    Current value (from the default) = "v8/buildtools/reclient_cfgs/chromium-browser-clang/rewrapper_linux_link.cfg"
+      From //build/toolchain/rbe.gni:31
+
+rbe_py_cfg_file
+    Current value (from the default) = "v8/buildtools/reclient_cfgs/python/rewrapper_linux.cfg"
+      From //build/toolchain/rbe.gni:27
+
+removed_rust_stdlib_libs
+    Current value (from the default) = []
+      From //build/config/rust.gni:53
+
+    Any removed std rlibs in your Rust toolchain, relative to the standard
+    Rust toolchain. Typically used with 'use_unverified_rust_toolchain' = true
+
+rust_sysroot_absolute
+    Current value (from the default) = ""
+      From //build/config/rust.gni:45
+
+    Chromium currently has a Rust toolchain for Android and Linux, but
+    if you wish to experiment on more platforms you can use this
+    argument to specify an alternative toolchain.
+    This should be an absolute path to a directory
+    containing a 'bin' directory and others. Commonly
+    <home dir>/.rustup/toolchains/nightly-<something>-<something>
+
+rustc_can_link
+    Current value (from the default) = true
+      From //build/config/rust.gni:77
+
+    Rust code may end up being linked into a final executable by:
+    * rustc (which calls lld)
+    * our pre-existing C++ linker invocations
+    At the moment, this first pipeline is incompatible with the ldflags we use
+    for thin LTO, due to some problem in escaping gn rules. There's a further
+    problem with -lunwind on Android.
+    However, Rust code is still useful if it's contributing to our existing
+    C++ linker invocations, so this doesn't disable Rust entirely. It does
+    disable Rust unit test executables, so we do need to fix this.
+    https://crbug.com/1229423
+    NB this may be overridden by individual toolchains
+
+rustc_version
+    Current value (from the default) = ""
+      From //build/config/rust.gni:37
+
+    The version string returned by rustc -V, if using an alternative toolchain.
+
+sample_profile_is_accurate
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:149
+
+    Whether we should consider the profile we're using to be accurate. Accurate
+    profiles have the benefit of (potentially substantial) binary size
+    reductions, by instructing the compiler to optimize cold and uncovered
+    functions heavily for size. This often comes at the cost of performance.
+
+sanitizer_coverage_flags
+    Current value (from the default) = ""
+      From //build/config/sanitizers/sanitizers.gni:97
+
+    Value for -fsanitize-coverage flag. Setting this causes
+    use_sanitizer_coverage to be enabled.
+    This flag is not used for libFuzzer (use_libfuzzer=true). Instead, we use:
+        -fsanitize=fuzzer-no-link
+    Default value when unset and use_fuzzing_engine=true:
+        trace-pc-guard
+    Default value when unset and use_sanitizer_coverage=true:
+        trace-pc-guard,indirect-calls
+
+save_reproducers_on_lld_crash
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:170
+
+    If true, linker crashes will be rerun with `--reproduce` which causes
+    a reproducer file to be saved.
+
+show_includes
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:166
+
+    Enable -H, which prints the include tree during compilation.
+    For use by tools/clang/scripts/analyze_includes.py
+
+strip_debug_info
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:65
+
+    Android-only: Strip the debug info of libraries within lib.unstripped to
+    reduce size. As long as symbol_level > 0, this will still allow stacks to be
+    symbolized.
+
+symbol_level
+    Current value = 0
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:15
+    Overridden from the default = -1
+      From //build/config/compiler/compiler.gni:60
+
+    How many symbols to include in the build. This affects the performance of
+    the build since the symbols are large and dealing with them is slow.
+      2 means regular build with symbols.
+      1 means minimal symbols, usually enough for backtraces only. Symbols with
+    internal linkage (static functions or those in anonymous namespaces) may not
+    appear when using this level.
+      0 means no symbols.
+      -1 means auto-set according to debug/release and platform.
+
+sysroot
+    Current value (from the default) = ""
+      From //build/config/sysroot.gni:18
+
+    The path of the sysroot for the current toolchain. If empty, default
+    sysroot is used.
+
+system_headers_in_deps
+    Current value (from the default) = false
+      From //build/toolchain/gcc_toolchain.gni:34
+
+    Use -MD instead of -MMD for compiler commands. This is useful for tracking
+    the comprehensive set of dependencies.
+
+system_libdir
+    Current value (from the default) = "lib"
+      From //build/config/linux/pkg_config.gni:47
+
+    CrOS systemroots place pkgconfig files at <systemroot>/usr/share/pkgconfig
+    and one of <systemroot>/usr/lib/pkgconfig or <systemroot>/usr/lib64/pkgconfig
+    depending on whether the systemroot is for a 32 or 64 bit architecture.
+   
+    When build under GYP, CrOS board builds specify the 'system_libdir' variable
+    as part of the GYP_DEFINES provided by the CrOS emerge build or simple
+    chrome build scheme. This variable permits controlling this for GN builds
+    in similar fashion by setting the `system_libdir` variable in the build's
+    args.gn file to 'lib' or 'lib64' as appropriate for the target architecture.
+
+target_cpu
+    Current value = "x64"
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:5
+    Overridden from the default = ""
+      (Internally set; try `gn help target_cpu`.)
+
+target_os
+    Current value (from the default) = ""
+      (Internally set; try `gn help target_os`.)
+
+target_rpath
+    Current value (from the default) = ""
+      From //build/config/chromecast_build.gni:18
+
+    If non empty, rpath of executables is set to this.
+    If empty, default value is used.
+
+target_sysroot
+    Current value (from the default) = ""
+      From //build/config/sysroot.gni:11
+
+    The path of the sysroot that is applied when compiling using the target
+    toolchain.
+
+target_sysroot_dir
+    Current value (from the default) = "//build/linux"
+      From //build/config/sysroot.gni:14
+
+    The path to directory containing linux sysroot images.
+
+thin_lto_enable_optimizations
+    Current value (from the default) = true
+      From //build/config/compiler/BUILD.gn:127
+
+toolkit_views
+    Current value (from the default) = true
+      From //build/config/ui.gni:33
+
+    True means the UI is built using the "views" framework.
+
+treat_warnings_as_errors
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:21
+    Overridden from the default = true
+      From //build/config/compiler/compiler.gni:50
+
+    Default to warnings as errors for default workflow, where we catch
+    warnings with known toolchains. Allow overriding this e.g. for Chromium
+    builds on Linux that could use a different version of the compiler.
+    With GCC, warnings in no-Chromium code are always not treated as errors.
+
+use_afl
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:72
+
+    Compile for fuzzing with AFL.
+
+use_android_unwinder_v2
+    Current value (from the default) = true
+      From //build/config/compiler/compiler.gni:143
+
+    Set to true to use the android unwinder V2 implementation.
+
+use_aura
+    Current value (from the default) = true
+      From //build/config/ui.gni:28
+
+    Indicates if Aura is enabled. Aura is a low-level windowing library, sort
+    of a replacement for GDI or GTK.
+
+use_cfi_cast
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:112
+
+    Enable checks for bad casts: derived cast and unrelated cast.
+    TODO(krasin): remove this, when we're ready to add these checks by default.
+    https://crbug.com/626794
+
+use_cfi_diag
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:61
+
+    Print detailed diagnostics when Control Flow Integrity detects a violation.
+
+use_cfi_icall
+    Current value (from the default) = true
+      From //build/config/sanitizers/sanitizers.gni:58
+
+use_cfi_recover
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:65
+
+    Let Control Flow Integrity continue execution instead of crashing when
+    printing diagnostics (use_cfi_diag = true).
+
+use_chromium_rust_toolchain
+    Current value (from the default) = true
+      From //build/config/rust.gni:34
+
+    Use experimental Rust toolchain built in-tree. See //tools/rust. For now,
+    only use it for linux targets. The package only has prebuilt libs for linux.
+    More targets will be added later.
+   
+    Ideally this should check `current_os` so that e.g. Android builds will use
+    the Android toolchain for target artifacts and the Chromium Rust toolchain
+    for host artifacts. Currently there is an std mixup in //build/rust/std that
+    prevents this.
+   
+    TODO(https://crbug.com/1245714): fix std handling and check `current_os`.
+
+use_clang_coverage
+    Current value (from the default) = false
+      From //build/config/coverage/coverage.gni:23
+
+use_clang_profiling
+    Current value (from the default) = false
+      From //build/config/profiling/profiling.gni:10
+
+use_clang_profiling_inside_sandbox
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:176
+
+use_custom_libcxx
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:12
+    Overridden from the default = true
+      From //build/config/c++/c++.gni:15
+
+use_custom_libcxx_for_host
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:13
+    Overridden from the default = false
+      From //build/config/c++/c++.gni:25
+
+    Use libc++ instead of stdlibc++ when using the host_cpu toolchain, even if
+    use_custom_libcxx is false. This is useful for cross-compiles where a custom
+    toolchain for the target_cpu has been set as the default toolchain, but
+    use_custom_libcxx should still be true when building for the host.  The
+    expected usage is to set use_custom_libcxx=false and
+    use_custom_libcxx_for_host=true in the passed in buildargs.
+
+use_dbus
+    Current value (from the default) = true
+      From //build/config/features.gni:36
+
+use_debug_fission
+    Current value (from the default) = "default"
+      From //build/config/compiler/compiler.gni:81
+
+    use_debug_fission: whether to use split DWARF debug info
+    files. This can reduce link time significantly, but is incompatible
+    with some utilities such as icecc and ccache. Requires gold and
+    gcc >= 4.8 or clang.
+    http://gcc.gnu.org/wiki/DebugFission
+   
+    This is a placeholder value indicating that the code below should set
+    the default.  This is necessary to delay the evaluation of the default
+    value expression until after its input values such as use_gold have
+    been set, e.g. by a toolchain_args() block.
+
+use_dummy_lastchange
+    Current value (from the default) = false
+      From //build/util/lastchange.gni:9
+
+use_dwarf5
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:154
+
+    Enable DWARF v5.
+
+use_external_fuzzing_engine
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:75
+
+    Compile for fuzzing with an external engine (e.g., Grammarinator).
+
+use_full_pdb_paths
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:162
+
+    Override this to put full paths to PDBs in Windows PE files. This helps
+    windbg and Windows Performance Analyzer with finding the PDBs in some local-
+    build scenarios. This is never needed for bots or official builds. Because
+    this puts the output directory in the DLLs/EXEs it breaks build determinism.
+    Bugs have been reported to the windbg/WPA teams and this workaround will be
+    removed when they are fixed.
+
+use_ghash
+    Current value (from the default) = true
+      From //build/config/compiler/BUILD.gn:117
+
+    Turn this on to use ghash feature of lld for faster debug link on Windows.
+    http://blog.llvm.org/2018/01/improving-link-time-on-windows-with.html
+
+use_gio
+    Current value (from the default) = true
+      From //build/config/features.gni:38
+
+use_glib
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:10
+    Overridden from the default = true
+      From //build/config/ui.gni:36
+
+use_gold
+    Current value (from the default) = true
+      From //build/config/compiler/compiler.gni:238
+
+    Whether to use the gold linker from binutils instead of lld or bfd.
+
+use_goma
+    Current value (from the default) = false
+      From //build/toolchain/goma.gni:9
+
+    Set to true to enable distributed compilation using Goma.
+
+use_goma_rust
+    Current value (from the default) = false
+      From //build/config/rust.gni:64
+
+    Use goma for Rust builds. Experimental. The only known problem is
+    b/193072381, but then again, we don't expect a build speedup before much
+    more work is done.
+
+use_goma_thin_lto
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:99
+
+    If true, use Goma for ThinLTO code generation where applicable.
+
+use_icf
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:183
+
+    Set to true to use icf, Identical Code Folding.
+   
+    icf=all is broken in older golds, see
+    https://sourceware.org/bugzilla/show_bug.cgi?id=17704
+    chromeos binutils has been patched with the fix, so always use icf there.
+    The bug only affects x86 and x64, so we can still use ICF when targeting
+    other architectures.
+   
+    lld doesn't have the bug.
+
+use_internal_chrome_for_testing_icons
+    Current value (from the default) = false
+      From //build/config/chrome_build.gni:25
+
+    Whether to use internal Chrome for Testing (CfT) icons.
+    If set to true, use Google-internal icons, otherwise fall back to Chromium icons.
+   
+    This flag can only be set to true for CfT builds.
+
+use_jacoco_coverage
+    Current value (from the default) = false
+      From //build/config/coverage/coverage.gni:27
+
+    Enables JaCoCo Java code coverage.
+
+use_java_goma
+    Current value (from the default) = false
+      From //build/toolchain/goma.gni:26
+
+    TODO(crbug.com/726475): true if use_goma = true in the future.
+
+use_libfuzzer
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:69
+
+    Compile for fuzzing with LLVM LibFuzzer.
+    See http://www.chromium.org/developers/testing/libfuzzer
+
+use_libinput
+    Current value (from the default) = false
+      From //build/config/chromeos/args.gni:37
+
+    Determines if we're willing to link against libinput
+
+use_lld
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:37
+
+    Set to true to use lld, the LLVM linker.
+    In late bring-up on macOS (see docs/mac_lld.md).
+    Tentatively used on iOS.
+    The default linker everywhere else.
+
+use_locally_built_instrumented_libraries
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:44
+
+    Use dynamic libraries instrumented by one of the sanitizers instead of the
+    standard system libraries. Set this flag to build the libraries from source.
+
+use_lto_in_rustc_linking
+    Current value (from the default) = false
+      From //build/config/rust.gni:59
+
+    Use LTO when using rustc to link binaries. Experimental. Currently
+    incompatible with the options we use in our C++ toolchain to split LTO
+    units. This has no effect on the production of normal Chrome binaries, which
+    are linked by clang/lld rather than rustc. https://crbug.com/1229419
+
+use_ml_inliner
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:140
+
+    Set to true to enable using the ML inliner in LLVM. This currently only
+    enables the ML inliner when targeting Android.
+    Currently the ML inliner is only supported on linux hosts
+
+use_ozone
+    Current value (from the default) = true
+      From //build/config/ozone.gni:12
+
+    Indicates if Ozone is enabled. Ozone is a low-level library layer for Linux
+    that does not require X11.
+
+use_relative_vtables_abi
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:154
+
+    Use offsets rather than pointers in vtables in order to reduce the number of
+    relocations. This is safe to enable only when all C++ code is built with the
+    flag set to the same value.
+
+use_remoteexec
+    Current value (from the default) = false
+      From //build/toolchain/rbe.gni:14
+
+    Set to true to enable remote compilation using reclient.
+
+use_remoteexec_links
+    Current value (from the default) = false
+      From //build/toolchain/rbe.gni:17
+
+    Set to true to enable remote linking using reclient.
+
+use_rtti
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:4
+    Overridden from the default = false
+      From //build/config/compiler/BUILD.gn:80
+
+    Build with C++ RTTI enabled. Chromium builds without RTTI by default,
+    but some sanitizers are known to require it, like CFI diagnostics
+    and UBsan variants.
+
+use_sanitizer_configs_without_instrumentation
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:102
+
+    When enabled, only relevant sanitizer defines are set, but compilation
+    happens with no extra flags. This is useful when in component build
+    enabling sanitizers only in some of the components.
+
+use_sanitizer_coverage
+    Current value (from the default) = false
+      From //build/config/sanitizers/sanitizers.gni:165
+
+use_sysroot
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:11
+    Overridden from the default = true
+      From //build/config/sysroot.gni:22
+
+    Controls default is_linux sysroot. If set to true, and sysroot
+    is empty, default sysroot is calculated.
+
+use_text_section_splitting
+    Current value (from the default) = false
+      From //build/config/compiler/BUILD.gn:147
+
+    This argument is to control whether enabling text section splitting in the
+    final binary. When enabled, the separated text sections with prefix
+    '.text.hot', '.text.unlikely', '.text.startup' and '.text.exit' will not be
+    merged to '.text' section. This allows us to identify the hot code section
+    ('.text.hot') in the binary which may be mlocked or mapped to huge page to
+    reduce TLB misses which gives performance improvement on cpu usage.
+    The gold linker by default has text section splitting enabled.
+
+use_thin_lto
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:92
+
+use_udev
+    Current value (from the default) = true
+      From //build/config/features.gni:34
+
+    libudev usage. This currently only affects the content layer.
+
+using_mismatched_sample_profile
+    Current value (from the default) = false
+      From //build/config/compiler/compiler.gni:106
+
+    Whether we're using a sample profile collected on an architecture different
+    than the one we're compiling for.
+   
+    It's currently not possible to collect AFDO profiles on anything but
+    x86{,_64}.
+
+v8_advanced_bigint_algorithms
+    Current value (from the default) = true
+      From //gni/v8.gni:109
+
+    Enable advanced BigInt algorithms, costing about 10-30 KB binary size
+    depending on platform. Disabled on Android to save binary size.
+
+v8_allocation_site_tracking
+    Current value (from the default) = true
+      From //BUILD.gn:353
+
+    Enable global allocation site tracking.
+
+v8_android_log_stdout
+    Current value (from the default) = false
+      From //BUILD.gn:31
+
+    Print to stdout on Android.
+
+v8_annotate_torque_ir
+    Current value (from the default) = false
+      From //BUILD.gn:283
+
+    Generate comments describing the Torque intermediate representation.
+
+v8_builtins_profiling_log_file
+    Current value (from the default) = "default"
+      From //BUILD.gn:196
+
+    Provides the given V8 log file as an input to mksnapshot, where it can be
+    used for profile-guided optimization of builtins.
+   
+    To do profile-guided optimizations of builtins:
+    1. Build with v8_enable_builtins_profiling = true
+    2. Run your chosen workload with the --turbo-profiling-output flag.
+       For Chrome, the invocation might look like this:
+         chrome --no-sandbox --disable-extensions
+           --js-flags="--turbo-profiling-output=v8.builtins.pgo"
+           "http://localhost/test-suite"
+    3. Run tools/builtins-pgo/get_hints.py to produce the branch hints,
+       selecting min_count and threshold_ratio as you wish.
+    4. Optionally repeat steps 2-3 for additional workloads, and use
+       tools/builtins-pgo/combine_hints.py to combine the hints produced in
+       step 3 into a single file.
+    5. Build again with v8_builtins_profiling_log_file set to the file created
+       in step 3 or 4.
+
+v8_can_use_fpu_instructions
+    Current value (from the default) = true
+      From //BUILD.gn:229
+
+    Similar to vfp but on MIPS.
+
+v8_check_header_includes
+    Current value (from the default) = false
+      From //BUILD.gn:244
+
+    Check that each header can be included in isolation (requires also
+    setting the "check_v8_header_includes" gclient variable to run a
+    specific hook).
+
+v8_code_comments
+    Current value (from the default) = ""
+      From //BUILD.gn:110
+
+    Allow runtime-enabled code comments (with --code-comments). Enabled by
+    default in debug builds.
+    Sets -dV8_CODE_COMMENTS
+
+v8_code_coverage
+    Current value (from the default) = false
+      From //gni/v8.gni:14
+
+    Set flags for tracking code coverage. Uses gcov with gcc and sanitizer
+    coverage with clang.
+
+v8_control_flow_integrity
+    Current value (from the default) = false
+      From //BUILD.gn:294
+
+v8_correctness_fuzzer
+    Current value (from the default) = false
+      From //gni/v8.gni:17
+
+    Includes files needed for correctness fuzzing.
+
+v8_current_cpu
+    Current value (from the default) = "x64"
+      From //build/config/v8_target_cpu.gni:63
+
+    This argument is declared here so that it can be overridden in toolchains.
+    It should never be explicitly set by the user.
+
+v8_custom_deps
+    Current value (from the default) = ""
+      From //BUILD.gn:34
+
+    Dynamically set an additional dependency from v8/custom_deps.
+
+v8_deprecation_warnings
+    Current value (from the default) = true
+      From //BUILD.gn:59
+
+    Enable compiler warnings when using V8_DEPRECATED apis.
+
+v8_dict_property_const_tracking
+    Current value (from the default) = false
+      From //BUILD.gn:337
+
+    Experimental feature for tracking constness of properties in non-global
+    dictionaries. Enabling this also always keeps prototypes in dict mode,
+    meaning that they are not switched to fast mode.
+    Sets -DV8_DICT_PROPERTY_CONST_TRACKING
+
+v8_disable_write_barriers
+    Current value (from the default) = false
+      From //BUILD.gn:264
+
+    Disable write barriers when GCs are non-incremental and
+    heap has single generation.
+
+v8_embed_script
+    Current value (from the default) = ""
+      From //BUILD.gn:65
+
+    Embeds the given script into the snapshot.
+
+v8_embedder_string
+    Current value (from the default) = ""
+      From //BUILD.gn:68
+
+    Allows the embedder to add a custom suffix to the version string.
+
+v8_enable_31bit_smis_on_64bit_arch
+    Current value (from the default) = false
+      From //BUILD.gn:132
+
+v8_enable_allocation_folding
+    Current value (from the default) = true
+      From //BUILD.gn:347
+
+    Enable allocation folding globally (sets -dV8_ALLOCATION_FOLDING).
+    When it's disabled, the --turbo-allocation-folding runtime flag will be ignored.
+
+v8_enable_atomic_object_field_writes
+    Current value (from the default) = ""
+      From //BUILD.gn:153
+
+    Sets -dV8_ATOMIC_OBJECT_FIELD_WRITES and turns all field write operations
+    into relaxed atomic operations.
+
+v8_enable_backtrace
+    Current value (from the default) = ""
+      From //gni/v8.gni:33
+
+    Support for backtrace_symbols on linux.
+
+v8_enable_builtins_profiling
+    Current value (from the default) = false
+      From //BUILD.gn:171
+
+    Runs mksnapshot with --turbo-profiling. After building in this
+    configuration, any subsequent run of d8 will output information about usage
+    of basic blocks in builtins.
+
+v8_enable_builtins_profiling_verbose
+    Current value (from the default) = false
+      From //BUILD.gn:177
+
+    Runs mksnapshot with --turbo-profiling-verbose. After building in this
+    configuration, any subsequent run of d8 will output information about usage
+    of basic blocks in builtins, including the schedule and disassembly of all
+    used builtins.
+
+v8_enable_cet_shadow_stack
+    Current value (from the default) = false
+      From //BUILD.gn:363
+
+    Change code emission and runtime features to be CET shadow-stack compliant
+    (incomplete and experimental).
+
+v8_enable_concurrent_marking
+    Current value (from the default) = true
+      From //BUILD.gn:157
+
+    Controls the default value of v8_enable_concurrent_marking_state. See the
+    default setting code below.
+
+v8_enable_conservative_stack_scanning
+    Current value (from the default) = false
+      From //gni/v8.gni:82
+
+    Scan the call stack conservatively during garbage collection.
+
+v8_enable_debug_code
+    Current value (from the default) = ""
+      From //BUILD.gn:115
+
+    Allow runtime-enabled debug code (with --debug-code). Enabled by default in
+    debug builds.
+    Sets -dV8_ENABLE_DEBUG_CODE
+
+v8_enable_debugging_features
+    Current value (from the default) = false
+      From //BUILD.gn:38
+
+    Turns on all V8 debug features. Enables running V8 in a pseudo debug mode
+    within a release Chrome.
+
+v8_enable_disassembler
+    Current value (from the default) = ""
+      From //BUILD.gn:71
+
+    Sets -dENABLE_DISASSEMBLER.
+
+v8_enable_etw_stack_walking
+    Current value (from the default) = false
+      From //BUILD.gn:47
+
+    Sets -DV8_ENABLE_ETW_STACK_WALKING. Enables ETW Stack Walking
+
+v8_enable_external_code_space
+    Current value (from the default) = ""
+      From //BUILD.gn:208
+
+    Enable support for external code range relative to the pointer compression
+    cage.
+    Sets -dV8_EXTERNAL_CODE_SPACE
+
+v8_enable_fast_mksnapshot
+    Current value (from the default) = false
+      From //BUILD.gn:95
+
+    Enable fast mksnapshot runs.
+
+v8_enable_fast_torque
+    Current value (from the default) = ""
+      From //BUILD.gn:98
+
+    Optimize code for Torque executable, even during a debug build.
+
+v8_enable_future
+    Current value (from the default) = false
+      From //BUILD.gn:41
+
+    Sets -DV8_ENABLE_FUTURE.
+
+v8_enable_gdbjit
+    Current value (from the default) = true
+      From //BUILD.gn:237
+
+v8_enable_google_benchmark
+    Current value (from the default) = false
+      From //gni/v8.gni:90
+
+v8_enable_handle_zapping
+    Current value (from the default) = false
+      From //BUILD.gn:89
+
+    Sets -dENABLE_HANDLE_ZAPPING.
+
+v8_enable_heap_snapshot_verify
+    Current value (from the default) = ""
+      From //BUILD.gn:350
+
+    Enable runtime verification of heap snapshots produced for devtools.
+
+v8_enable_hugepage
+    Current value (from the default) = false
+      From //BUILD.gn:86
+
+    Sets -dENABLE_HUGEPAGE
+
+v8_enable_i18n_support
+    Current value = true
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:18
+    Overridden from the default = true
+      From //gni/v8.gni:41
+
+    Enable ECMAScript Internationalization API. Enabling this feature will
+    add a dependency on the ICU library.
+
+v8_enable_ignition_dispatch_counting
+    Current value (from the default) = false
+      From //BUILD.gn:166
+
+    Sets -dV8_IGNITION_DISPATCH_COUNTING.
+    Enables counting frequencies of bytecode dispatches. After building in this
+    configuration, subsequent runs of d8 can output frequencies for each pair
+    of (current, next) bytecode instructions executed if you specify
+    --trace-ignition-dispatches-output-file, or can generate a JS object with
+    those frequencies if you run with --expose-ignition-statistics and call the
+    extension function getIgnitionDispatchCounters().
+
+v8_enable_inner_pointer_resolution_mb
+    Current value (from the default) = false
+      From //gni/v8.gni:88
+
+    Use the marking bitmap for inner pointer resolution.
+
+v8_enable_inner_pointer_resolution_osb
+    Current value (from the default) = false
+      From //gni/v8.gni:85
+
+    Use the object start bitmap for inner pointer resolution.
+
+v8_enable_javascript_promise_hooks
+    Current value (from the default) = false
+      From //BUILD.gn:343
+
+    Allow for JS promise hooks (instead of just C++).
+
+v8_enable_lazy_source_positions
+    Current value (from the default) = true
+      From //BUILD.gn:251
+
+    Enable lazy source positions by default.
+
+v8_enable_lite_mode
+    Current value (from the default) = false
+      From //gni/v8.gni:64
+
+    Lite mode disables a number of performance optimizations to reduce memory
+    at the cost of performance.
+    Sets -DV8_LITE_MODE.
+
+v8_enable_maglev
+    Current value (from the default) = ""
+      From //BUILD.gn:212
+
+    Enable the Maglev compiler.
+    Sets -dV8_ENABLE_MAGLEV
+
+v8_enable_map_packing
+    Current value (from the default) = false
+      From //BUILD.gn:340
+
+    Enable map packing & unpacking (sets -dV8_MAP_PACKING).
+
+v8_enable_object_print
+    Current value = true
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:19
+    Overridden from the default = ""
+      From //BUILD.gn:135
+
+    Sets -dOBJECT_PRINT.
+
+v8_enable_pointer_compression
+    Current value (from the default) = ""
+      From //BUILD.gn:130
+
+    Enable pointer compression (sets -dV8_COMPRESS_POINTERS).
+
+v8_enable_pointer_compression_8gb
+    Current value (from the default) = ""
+      From //BUILD.gn:374
+
+    Enables pointer compression for 8GB heaps.
+    Sets -DV8_COMPRESS_POINTERS_8GB.
+
+v8_enable_pointer_compression_shared_cage
+    Current value (from the default) = ""
+      From //BUILD.gn:131
+
+v8_enable_precise_zone_stats
+    Current value (from the default) = false
+      From //BUILD.gn:323
+
+    Experimental feature for collecting per-class zone memory stats.
+    Requires use_rtti = true
+
+v8_enable_regexp_interpreter_threaded_dispatch
+    Current value (from the default) = true
+      From //BUILD.gn:276
+
+    Use token threaded dispatch for the regular expression interpreter.
+    Use switch-based dispatch if this is false
+
+v8_enable_runtime_call_stats
+    Current value (from the default) = false
+      From //gni/v8.gni:76
+
+    Enable runtime call stats.
+
+v8_enable_sandbox
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:20
+    Overridden from the default = ""
+      From //BUILD.gn:314
+
+    Enable the experimental V8 sandbox.
+    Sets -DV8_ENABLE_SANDBOX.
+
+v8_enable_shared_ro_heap
+    Current value (from the default) = ""
+      From //BUILD.gn:248
+
+    Enable sharing read-only space across isolates.
+    Sets -DV8_SHARED_RO_HEAP.
+
+v8_enable_short_builtin_calls
+    Current value (from the default) = ""
+      From //BUILD.gn:203
+
+    Enable short builtins call instruction sequences by un-embedding builtins.
+    Sets -dV8_SHORT_BUILTIN_CALLS
+
+v8_enable_single_generation
+    Current value (from the default) = ""
+      From //BUILD.gn:272
+
+    Redirect allocation in young generation so that there will be
+    only one single generation.
+
+v8_enable_slow_dchecks
+    Current value (from the default) = false
+      From //BUILD.gn:92
+
+    Enable slow dchecks.
+
+v8_enable_snapshot_code_comments
+    Current value (from the default) = false
+      From //BUILD.gn:105
+
+    Enable code comments for builtins in the snapshot (impacts performance).
+    This also enables v8_code_comments.
+
+v8_enable_snapshot_compression
+    Current value (from the default) = false
+      From //BUILD.gn:287
+
+v8_enable_snapshot_native_code_counters
+    Current value (from the default) = ""
+      From //BUILD.gn:121
+
+    Enable native counters from the snapshot (impacts performance, sets
+    -dV8_SNAPSHOT_NATIVE_CODE_COUNTERS).
+    This option will generate extra code in the snapshot to increment counters,
+    as per the --native-code-counters flag.
+
+v8_enable_static_roots
+    Current value (from the default) = false
+      From //BUILD.gn:124
+
+    Use pre-generated static root pointer values from static-roots.h.
+
+v8_enable_swiss_name_dictionary
+    Current value (from the default) = false
+      From //BUILD.gn:327
+
+    Experimental feature that uses SwissNameDictionary instead of NameDictionary
+    as the backing store for all dictionary mode objects.
+
+v8_enable_system_instrumentation
+    Current value (from the default) = false
+      From //BUILD.gn:44
+
+    Sets -DENABLE_SYSTEM_INSTRUMENTATION. Enables OS-dependent event tracing
+
+v8_enable_test_features
+    Current value (from the default) = ""
+      From //BUILD.gn:199
+
+    Enables various testing features.
+
+v8_enable_third_party_heap
+    Current value (from the default) = false
+      From //BUILD.gn:254
+
+    Enable third party HEAP library
+
+v8_enable_trace_baseline_exec
+    Current value (from the default) = false
+      From //BUILD.gn:146
+
+v8_enable_trace_feedback_updates
+    Current value (from the default) = false
+      From //BUILD.gn:149
+
+    Sets -dV8_TRACE_FEEDBACK_UPDATES.
+
+v8_enable_trace_ignition
+    Current value (from the default) = false
+      From //BUILD.gn:145
+
+v8_enable_trace_maps
+    Current value (from the default) = ""
+      From //BUILD.gn:138
+
+    Sets -dV8_TRACE_MAPS.
+
+v8_enable_trace_unoptimized
+    Current value (from the default) = ""
+      From //BUILD.gn:144
+
+    Sets -dV8_TRACE_UNOPTIMIZED.
+
+v8_enable_unconditional_write_barriers
+    Current value (from the default) = false
+      From //BUILD.gn:268
+
+    Ensure that write barriers are always used.
+    Useful for debugging purposes.
+
+v8_enable_v8_checks
+    Current value (from the default) = ""
+      From //BUILD.gn:141
+
+    Sets -dV8_ENABLE_CHECKS.
+
+v8_enable_verify_csa
+    Current value (from the default) = false
+      From //BUILD.gn:127
+
+    Enable code-generation-time checking of types in the CodeStubAssembler.
+
+v8_enable_verify_heap
+    Current value (from the default) = ""
+      From //BUILD.gn:53
+
+    Sets -DVERIFY_HEAP.
+
+v8_enable_verify_predictable
+    Current value (from the default) = false
+      From //BUILD.gn:56
+
+    Sets -DVERIFY_PREDICTABLE
+
+v8_enable_vtunejit
+    Current value (from the default) = false
+      From //BUILD.gn:80
+
+    Sets -dENABLE_VTUNE_JIT_INTERFACE.
+
+v8_enable_vtunetracemark
+    Current value (from the default) = false
+      From //BUILD.gn:83
+
+    Sets -dENABLE_VTUNE_TRACEMARK.
+
+v8_enable_wasm_gdb_remote_debugging
+    Current value (from the default) = false
+      From //gni/v8.gni:59
+
+    Enable WebAssembly debugging via GDB-remote protocol.
+
+v8_enable_wasm_simd256_revec
+    Current value (from the default) = false
+      From //gni/v8.gni:73
+
+    Enable 256-bit long vector re-vectorization pass in WASM compilation pipeline.
+
+v8_enable_webassembly
+    Current value (from the default) = ""
+      From //gni/v8.gni:70
+
+    Include support for WebAssembly. If disabled, the 'WebAssembly' global
+    will not be available, and embedder APIs to generate WebAssembly modules
+    will fail. Also, asm.js will not be translated to WebAssembly and will be
+    executed as standard JavaScript instead.
+
+v8_enable_zone_compression
+    Current value (from the default) = ""
+      From //BUILD.gn:310
+
+    Enable V8 zone compression experimental feature.
+    Sets -DV8_COMPRESS_ZONES.
+
+v8_etw_guid
+    Current value (from the default) = ""
+      From //BUILD.gn:50
+
+    Sets the GUID for the ETW provider
+
+v8_expose_memory_corruption_api
+    Current value (from the default) = false
+      From //BUILD.gn:319
+
+    Expose the memory corruption API to JavaScript. Useful for testing the sandbox.
+    WARNING This will expose builtins that (by design) cause memory corruption.
+    Sets -DV8_EXPOSE_MEMORY_CORRUPTION_API
+
+v8_expose_symbols
+    Current value (from the default) = false
+      From //gni/v8.gni:50
+
+    Expose symbols for dynamic linking.
+
+v8_fuchsia_use_vmex_resource
+    Current value (from the default) = false
+      From //BUILD.gn:370
+
+    Get VMEX priviledge at startup.
+    It allows to run V8 without "deprecated-ambient-replace-as-executable".
+    Sets -DV8_USE_VMEX_RESOURCE.
+    TODO(victorgomes): Remove this flag once Chormium no longer needs
+    the deprecated feature.
+
+v8_fuzzilli
+    Current value (from the default) = false
+      From //gni/v8.gni:79
+
+    Add fuzzilli fuzzer support.
+
+v8_gcmole
+    Current value (from the default) = false
+      From //gni/v8.gni:27
+
+    Indicate if gcmole was fetched as a hook to make it available on swarming.
+
+v8_generate_external_defines_header
+    Current value = true
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:17
+    Overridden from the default = false
+      From //BUILD.gn:331
+
+    If enabled then macro definitions that are used in externally visible
+    header files are placed in a separate header file v8-gn.h.
+
+v8_has_valgrind
+    Current value (from the default) = false
+      From //gni/v8.gni:24
+
+    Indicate if valgrind was fetched as a custom deps to make it available on
+    swarming.
+
+v8_imminent_deprecation_warnings
+    Current value (from the default) = true
+      From //BUILD.gn:62
+
+    Enable compiler warnings when using V8_DEPRECATE_SOON apis.
+
+v8_monolithic
+    Current value = true
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:14
+    Overridden from the default = false
+      From //gni/v8.gni:47
+
+    Enable monolithic static library for embedders.
+
+v8_multi_arch_build
+    Current value (from the default) = false
+      From //gni/v8.gni:20
+
+    Adds additional compile target for building multiple architectures at once.
+
+v8_no_inline
+    Current value (from the default) = false
+      From //BUILD.gn:223
+
+    Switches off inlining in V8.
+
+v8_optimized_debug
+    Current value (from the default) = true
+      From //gni/v8.gni:30
+
+    Turns on compiler optimizations in V8 in Debug build.
+
+v8_os_page_size
+    Current value (from the default) = "0"
+      From //BUILD.gn:226
+
+    Override OS page size when generating snapshot
+
+v8_postmortem_support
+    Current value (from the default) = false
+      From //BUILD.gn:217
+
+    With post mortem support enabled, metadata is embedded into libv8 that
+    describes various parameters of the VM for use by debuggers. See
+    tools/gen-postmortem-metadata.py for details.
+
+v8_promise_internal_field_count
+    Current value (from the default) = 0
+      From //BUILD.gn:74
+
+    Sets the number of internal fields on promise objects.
+
+v8_scriptormodule_legacy_lifetime
+    Current value (from the default) = false
+      From //BUILD.gn:359
+
+    TODO(cbruni, v8:12302): Remove once API is migrated
+    Enable legacy mode for ScriptOrModule's lifetime. By default it's a
+    temporary object, if enabled it will be kept alive by the parent Script.
+    This is only used by nodejs.
+
+v8_snapshot_toolchain
+    Current value (from the default) = ""
+      From //gni/snapshot_toolchain.gni:34
+
+    The v8 snapshot needs to be built by code that is compiled with a
+    toolchain that matches the bit-width of the target CPU, but runs on
+    the host.
+
+v8_static_library
+    Current value = true
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:23
+    Overridden from the default = false
+      From //gni/v8.gni:44
+
+    Use static libraries instead of source_sets.
+
+v8_symbol_level
+    Current value = 0
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:16
+    Overridden from the default = 0
+      From //gni/v8.gni:56
+
+    Override global symbol level setting for v8.
+
+v8_target_cpu
+    Current value (from the default) = ""
+      From //build/config/v8_target_cpu.gni:33
+
+    This arg is used when we want to tell the JIT-generating v8 code
+    that we want to have it generate for an architecture that is different
+    than the architecture that v8 will actually run on; we then run the
+    code under an emulator. For example, we might run v8 on x86, but
+    generate arm code and run that under emulation.
+   
+    This arg is defined here rather than in the v8 project because we want
+    some of the common architecture-specific args (like arm_float_abi or
+    mips_arch_variant) to be set to their defaults either if the current_cpu
+    applies *or* if the v8_current_cpu applies.
+   
+    As described below, you can also specify the v8_target_cpu to use
+    indirectly by specifying a `custom_toolchain` that contains v8_$cpu in the
+    name after the normal toolchain.
+   
+    For example, `gn gen --args="custom_toolchain=...:clang_x64_v8_arm64"`
+    is equivalent to setting --args=`v8_target_cpu="arm64"`. Setting
+    `custom_toolchain` is more verbose but makes the toolchain that is
+    (effectively) being used explicit.
+   
+    v8_target_cpu can only be used to target one architecture in a build,
+    so if you wish to build multiple copies of v8 that are targeting
+    different architectures, you will need to do something more
+    complicated involving multiple toolchains along the lines of
+    custom_toolchain, above.
+
+v8_third_party_heap_files
+    Current value (from the default) = []
+      From //BUILD.gn:260
+
+    Source code used by third party heap
+
+v8_third_party_heap_libs
+    Current value (from the default) = []
+      From //BUILD.gn:257
+
+    Libaries used by third party heap
+
+v8_typed_array_max_size_in_heap
+    Current value (from the default) = 64
+      From //BUILD.gn:235
+
+    Controls the threshold for on-heap/off-heap Typed Arrays.
+
+v8_use_external_startup_data
+    Current value = false
+      From /build/conandata/conan-data/v8/11.0.226.19/ccifix/2023-03-22_85d5ef/build/390a708c9152bfc39e261c0c728021c5b33d2785/args.gn:22
+    Overridden from the default = ""
+      From //gni/v8.gni:37
+
+    Use external files for startup data blobs:
+    the JS builtins sources and the start snapshot.
+
+v8_use_libm_trig_functions
+    Current value (from the default) = false
+      From //gni/v8.gni:112
+
+    TODO: macros for determining endian type are clang specific.
+
+v8_use_mips_abi_hardfloat
+    Current value (from the default) = true
+      From //BUILD.gn:232
+
+    Similar to the ARM hard float ABI but on MIPS.
+
+v8_use_perfetto
+    Current value (from the default) = false
+      From //gni/v8.gni:53
+
+    Implement tracing using Perfetto (https://perfetto.dev).
+
+v8_use_siphash
+    Current value (from the default) = false
+      From //BUILD.gn:220
+
+    Use Siphash as added protection against hash flooding attacks.
+
+v8_use_zlib
+    Current value (from the default) = true
+      From //BUILD.gn:378
+
+    Compile V8 using zlib as dependency.
+    Sets -DV8_USE_ZLIB
+
+v8_value_deserializer_hard_fail
+    Current value (from the default) = false
+      From //BUILD.gn:381
+
+    Make ValueDeserializer crash if the data to deserialize is invalid.
+
+v8_verify_torque_generation_invariance
+    Current value (from the default) = false
+      From //BUILD.gn:280
+
+    Enable additional targets necessary for verification of torque
+    file generation
+
+v8_win64_unwinding_info
+    Current value (from the default) = true
+      From //BUILD.gn:101
+
+    Enable the registration of unwinding info for Windows x64 and ARM64.
+
