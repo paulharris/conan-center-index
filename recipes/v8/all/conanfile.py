@@ -1,6 +1,7 @@
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import build_jobs
+from conan.tools.env import Environment
 from conan.tools.files import apply_conandata_patches, export_conandata_patches, chdir, mkdir, replace_in_file, copy
 from conan.tools.microsoft import check_min_vs, is_msvc_static_runtime, is_msvc, msvc_runtime_flag
 from conan.tools.scm import Version, Git
@@ -120,7 +121,7 @@ class V8Conan(ConanFile):
             msg = f"Found Python in path, but with invalid version {verstr} (v8 requires >= {py2_min} and < {py2_max} or >= {py3_min})"
             raise ConanInvalidConfiguration(msg)
 
-    # keep this in sync with _set_environment_vars()
+    # keep this in sync with self._make_environment()
     # False if not Windows, True if is Windows, will raise Exception if not supported Windows compiler
     def _uses_msvc_runtime(self):
         if self.settings.os == "Windows":
@@ -160,36 +161,38 @@ class V8Conan(ConanFile):
             if not shutil.which("flex"):
                 self.tool_requires("flex/2.6.4")
 
-    def _set_environment_vars(self):
+    def _make_environment(self):
         """set the environment variables, such that the google tooling is found (including the bundled python2)"""
-        os.environ["PATH"] = os.path.join(self.source_folder, "depot_tools") + os.pathsep + os.environ["PATH"]
-        os.environ["DEPOT_TOOLS_PATH"] = os.path.join(self.source_folder, "depot_tools")
+        env = Environment()
+        env.prepend_path("PATH", os.path.join(self.source_folder, "depot_tools"))
+        env.define("DEPOT_TOOLS_PATH", os.path.join(self.source_folder, "depot_tools"))
         if self.settings.os == "Windows":
-            os.environ["DEPOT_TOOLS_WIN_TOOLCHAIN"] = "0"
+            env.define("DEPOT_TOOLS_WIN_TOOLCHAIN", "0")
             # keep this in sync with _uses_msvc_runtime()
             if str(self.settings.compiler) == "Visual Studio":
                 if str(self.settings.compiler.version) == "15":
-                    os.environ["GYP_MSVS_VERSION"] = "2017"
+                    env.define("GYP_MSVS_VERSION", "2017")
                 elif str(self.settings.compiler.version) == "16":
-                    os.environ["GYP_MSVS_VERSION"] = "2019"
+                    env.define("GYP_MSVS_VERSION", "2019")
                 elif str(self.settings.compiler.version) == "17":
-                    os.environ["GYP_MSVS_VERSION"] = "2022"
+                    env.define("GYP_MSVS_VERSION", "2022")
                 else:
                     raise ConanInvalidConfiguration("Only Visual Studio 15,16,17 is supported.")
             elif str(self.settings.compiler) == "msvc":
                 if str(self.settings.compiler.version) == "191": # "15":
-                    os.environ["GYP_MSVS_VERSION"] = "2017"
+                    env.define("GYP_MSVS_VERSION", "2017")
                 elif str(self.settings.compiler.version) == "192": # "16":
-                    os.environ["GYP_MSVS_VERSION"] = "2019"
+                    env.define("GYP_MSVS_VERSION", "2019")
                 elif str(self.settings.compiler.version) == "193": # "17":
-                    os.environ["GYP_MSVS_VERSION"] = "2022"
+                    env.define("GYP_MSVS_VERSION", "2022")
                 else:
                     raise ConanInvalidConfiguration("Only msvc 191,192,193 is supported (VC 2017,2019,2022 -> 15,16,17 -> 191,192,193).")
             else:
                 raise ConanInvalidConfiguration("Only 'msvc' and 'Visual Studio' compilers currently known to be supported - update recipe.")
 
         if self.settings.os == "Macos" and self.gn_arch == "arm64":
-            os.environ["VPYTHON_BYPASS"] = "manually managed python not supported by chrome operations"
+            env.define("VPYTHON_BYPASS", "manually managed python not supported by chrome operations")
+        return env
 
     def source(self):
         git = Git(self)
@@ -201,13 +204,15 @@ class V8Conan(ConanFile):
             with chdir(self, "v8"):
                 self.run("echo \"mac-arm64\" > .cipd_client_platform")
 
-        self._set_environment_vars()
-        # self.run("gclient")   -- does not appear to be necessary
-        self.run("fetch v8")
+        env = self._make_environment()
+        envvars = env.vars(self, scope="build")
+        with envvars.apply():
+            # self.run("gclient")   -- does not appear to be necessary
+            self.run("fetch v8")
 
-        with chdir(self, "v8"):
-            self.run("git checkout {}".format(self.version))
-            self.run("gclient sync")
+            with chdir(self, "v8"):
+                self.run("git checkout {}".format(self.version))
+                self.run("gclient sync")
 
     @property
     def gn_arch(self):
@@ -222,13 +227,16 @@ class V8Conan(ConanFile):
     def _install_system_requirements_linux(self):
         """some extra script must be executed on linux"""
         self.output.info("Calling v8/build/install-build-deps.sh")
-        os.environ["PATH"] += os.pathsep + os.path.join(self.source_folder, "depot_tools")
-        sh_script = self.source_folder + "/v8/build/install-build-deps.sh"
-        self.run("chmod +x " + sh_script)
-        cmd = sh_script + " --unsupported --no-arm --no-nacl --no-backwards-compatible --no-chromeos-fonts --no-prompt "
-        cmd = cmd + ("--syms" if str(self.settings.build_type) == "Debug" else "--no-syms")
-        cmd = "export DEBIAN_FRONTEND=noninteractive && " + cmd
-        self.run(cmd)
+        env = Environment()
+        env.prepend_path("PATH", os.path.join(self.source_folder, "depot_tools"))
+        envvars = env.vars(self, scope="build")
+        with envvars.apply():
+            sh_script = self.source_folder + "/v8/build/install-build-deps.sh"
+            self.run("chmod +x " + sh_script)
+            cmd = sh_script + " --unsupported --no-arm --no-nacl --no-backwards-compatible --no-chromeos-fonts --no-prompt "
+            cmd = cmd + ("--syms" if str(self.settings.build_type) == "Debug" else "--no-syms")
+            cmd = "export DEBIAN_FRONTEND=noninteractive && " + cmd
+            self.run(cmd)
 
     def _patch_gn_build_system(self, source_file, dest_folder):
         # Always patch over what is there
@@ -440,7 +448,6 @@ class V8Conan(ConanFile):
         apply_conandata_patches(self)
 
         v8_source_root = os.path.join(self.source_folder, "v8")
-        self._set_environment_vars()
 
         if self.settings.os == "Linux":
             # TODO reenable after testing...
@@ -471,11 +478,14 @@ class V8Conan(ConanFile):
 
             generator_call = f"gn gen {self.build_folder}"
 
-            self.run("python --version")
-            print(generator_call)
-            self.run(generator_call)
-            num_parallel = build_jobs(self)
-            self.run(f"ninja -v -j {num_parallel} -C {self.build_folder} v8_monolith")
+            env = self._make_environment()
+            envvars = env.vars(self, scope="build")
+            with envvars.apply():
+                self.run("python --version")
+                print(generator_call)
+                self.run(generator_call)
+                num_parallel = build_jobs(self)
+                self.run(f"ninja -v -j {num_parallel} -C {self.build_folder} v8_monolith")
 
 
     def package(self):
