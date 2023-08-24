@@ -100,7 +100,7 @@ class V8Conan(ConanFile):
         from six import StringIO  # Python 2 and 3 compatible
         version_buf = StringIO()
         cmd_v = f"\"{python_exe}\" --version"
-        self.run(cmd_v, output=version_buf)
+        self.run(cmd_v, version_buf)
         version_str = version_buf.getvalue().strip()
         p = re.compile(r'Python (\d+\.\d+\.\d+)')
         verstr = p.match(version_str).group(1)
@@ -145,7 +145,7 @@ class V8Conan(ConanFile):
 
     def system_requirements(self):
         # TODO this isn't allowed ...
-        # if self.settings.os == "Linux":
+        # if self.info.settings.os == "Linux":
             # if not shutil.which("lsb-release"):
                 # tools.not-allowed-S-ystemPackageTool().install("lsb-release")
         self._check_python_version()
@@ -166,31 +166,31 @@ class V8Conan(ConanFile):
         env = Environment()
         env.prepend_path("PATH", os.path.join(self.source_folder, "depot_tools"))
         env.define("DEPOT_TOOLS_PATH", os.path.join(self.source_folder, "depot_tools"))
-        if self.settings.os == "Windows":
+        if self.info.settings.os == "Windows":
             env.define("DEPOT_TOOLS_WIN_TOOLCHAIN", "0")
             # keep this in sync with _uses_msvc_runtime()
-            if str(self.settings.compiler) == "Visual Studio":
-                if str(self.settings.compiler.version) == "15":
+            if str(self.info.settings.compiler) == "Visual Studio":
+                if str(self.info.settings.compiler.version) == "15":
                     env.define("GYP_MSVS_VERSION", "2017")
-                elif str(self.settings.compiler.version) == "16":
+                elif str(self.info.settings.compiler.version) == "16":
                     env.define("GYP_MSVS_VERSION", "2019")
-                elif str(self.settings.compiler.version) == "17":
+                elif str(self.info.settings.compiler.version) == "17":
                     env.define("GYP_MSVS_VERSION", "2022")
                 else:
                     raise ConanInvalidConfiguration("Only Visual Studio 15,16,17 is supported.")
-            elif str(self.settings.compiler) == "msvc":
-                if str(self.settings.compiler.version) == "191": # "15":
+            elif str(self.info.settings.compiler) == "msvc":
+                if str(self.info.settings.compiler.version) == "191": # "15":
                     env.define("GYP_MSVS_VERSION", "2017")
-                elif str(self.settings.compiler.version) == "192": # "16":
+                elif str(self.info.settings.compiler.version) == "192": # "16":
                     env.define("GYP_MSVS_VERSION", "2019")
-                elif str(self.settings.compiler.version) == "193": # "17":
+                elif str(self.info.settings.compiler.version) == "193": # "17":
                     env.define("GYP_MSVS_VERSION", "2022")
                 else:
                     raise ConanInvalidConfiguration("Only msvc 191,192,193 is supported (VC 2017,2019,2022 -> 15,16,17 -> 191,192,193).")
             else:
                 raise ConanInvalidConfiguration("Only 'msvc' and 'Visual Studio' compilers currently known to be supported - update recipe.")
 
-        if self.settings.os == "Macos" and self.gn_arch == "arm64":
+        if self.info.settings.os == "Macos" and self.gn_arch == "arm64":
             env.define("VPYTHON_BYPASS", "manually managed python not supported by chrome operations")
         return env
 
@@ -199,7 +199,7 @@ class V8Conan(ConanFile):
         depot_repo = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
         git.clone(url=depot_repo, target="depot_tools", args=["--depth","1"])
 
-        if self.settings.os == "Macos" and self.gn_arch == "arm64":
+        if self.info.settings.os == "Macos" and self.gn_arch == "arm64":
             mkdir(self, "v8")
             with chdir(self, "v8"):
                 self.run("echo \"mac-arm64\" > .cipd_client_platform")
@@ -221,7 +221,7 @@ class V8Conan(ConanFile):
             "armv8": "arm64"
         }
 
-        arch = str(self.settings.arch)
+        arch = str(self.info.settings.arch)
         return arch_map.get(arch, arch)
 
     def _install_system_requirements_linux(self):
@@ -234,7 +234,7 @@ class V8Conan(ConanFile):
             sh_script = self.source_folder + "/v8/build/install-build-deps.sh"
             self.run("chmod +x " + sh_script)
             cmd = sh_script + " --unsupported --no-arm --no-nacl --no-backwards-compatible --no-chromeos-fonts --no-prompt "
-            cmd = cmd + ("--syms" if str(self.settings.build_type) == "Debug" else "--no-syms")
+            cmd = cmd + ("--syms" if str(self.info.settings.build_type) == "Debug" else "--no-syms")
             cmd = "export DEBIAN_FRONTEND=noninteractive && " + cmd
             self.run(cmd)
 
@@ -307,8 +307,8 @@ class V8Conan(ConanFile):
 
         # Refer to v8/infra/mb/mb_config.pyl
         # TODO check if we can build Release and link to Debug consumer
-        want_debug = str(self.settings.build_type) == "Debug"
-        is_clang = "true" if ("clang" in str(self.settings.compiler).lower()) else "false"
+        want_debug = str(self.info.settings.build_type) == "Debug"
+        is_clang = "true" if ("clang" in str(self.info.settings.compiler).lower()) else "false"
 
         gen_arguments = [
             # Notes on how other embedders compile:
@@ -404,7 +404,7 @@ class V8Conan(ConanFile):
         if self.options.v8_enable_pointer_compression_8gb != "default":
             gen_arguments += ["v8_enable_pointer_compression_8gb = %s" % ("true" if self.options.v8_enable_pointer_compression_8gb else "false")]
 
-        if self.settings.os == "Windows":
+        if self.info.settings.os == "Windows":
             gen_arguments += [
                 "target_os = \"win\"",
                 "conan_compiler_runtime = \"%s\"" % str(msvc_runtime_flag(self)),
@@ -428,17 +428,17 @@ class V8Conan(ConanFile):
             "v8_static_library = %s" % ("false" if self.options.shared else "true")
         ]
 
-        if self.settings.os == "Linux":
-            toolchain_to_use = "//build/toolchain/conan/linux:%s_%s" % (self.settings.compiler, self.settings.arch)
+        if self.info.settings.os == "Linux":
+            toolchain_to_use = "//build/toolchain/conan/linux:%s_%s" % (self.info.settings.compiler, self.info.settings.arch)
             gen_arguments += [
                 "custom_toolchain=\"%s\"" % toolchain_to_use,
                 "host_toolchain=\"%s\"" % toolchain_to_use
             ]
 
-        if self.settings.os == "Linux" or self.settings.os == "Macos":
+        if self.info.settings.os == "Linux" or self.info.settings.os == "Macos":
             gen_arguments += [
-                "conan_compiler_name = \"%s\"" % self.settings.compiler,
-                "conan_compiler_libcxx = \"%s\"" % self.settings.compiler.libcxx
+                "conan_compiler_name = \"%s\"" % self.info.settings.compiler,
+                "conan_compiler_libcxx = \"%s\"" % self.info.settings.compiler.libcxx
             ]
 
         return gen_arguments
@@ -449,12 +449,12 @@ class V8Conan(ConanFile):
 
         v8_source_root = os.path.join(self.source_folder, "v8")
 
-        if self.settings.os == "Linux":
+        if self.info.settings.os == "Linux":
             # TODO reenable after testing...
             # self._install_system_requirements_linux()
             self._define_conan_toolchain()
 
-        if self.settings.os == "Linux" or self.settings.os == "Macos":
+        if self.info.settings.os == "Linux" or self.info.settings.os == "Macos":
             self._path_compiler_config()
 
         with chdir(self, v8_source_root):
