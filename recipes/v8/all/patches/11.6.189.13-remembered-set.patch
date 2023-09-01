@@ -1,0 +1,39 @@
+--- a/src/heap/cppgc/remembered-set.cc
++++ b/src/heap/cppgc/remembered-set.cc
+@@ -2,8 +2,6 @@
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
+ 
+-#if defined(CPPGC_YOUNG_GENERATION)
+-
+ #include "src/heap/cppgc/remembered-set.h"
+ 
+ #include <algorithm>
+@@ -17,6 +15,8 @@
+ #include "src/heap/cppgc/heap-visitor.h"
+ #include "src/heap/cppgc/marking-state.h"
+ 
++#if defined(CPPGC_YOUNG_GENERATION)
++
+ namespace cppgc {
+ namespace internal {
+ 
+--- a/src/heap/cppgc/remembered-set.h
++++ b/src/heap/cppgc/remembered-set.h
+@@ -5,14 +5,14 @@
+ #ifndef V8_HEAP_CPPGC_REMEMBERED_SET_H_
+ #define V8_HEAP_CPPGC_REMEMBERED_SET_H_
+ 
+-#if defined(CPPGC_YOUNG_GENERATION)
+-
+ #include <set>
+ 
+ #include "src/base/macros.h"
+ #include "src/heap/base/basic-slot-set.h"
+ #include "src/heap/cppgc/marking-worklists.h"
+ 
++#if defined(CPPGC_YOUNG_GENERATION)
++
+ namespace cppgc {
+ 
+ class Visitor;

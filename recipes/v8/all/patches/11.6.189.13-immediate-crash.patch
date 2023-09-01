@@ -1,0 +1,11 @@
+--- a/src/base/immediate-crash.h
++++ b/src/base/immediate-crash.h
+@@ -155,7 +155,7 @@
+ #else
+ 
+ // This is supporting build with MSVC where there is no __builtin_unreachable().
+-#define IMMEDIATE_CRASH() WRAPPED_TRAP_SEQUENCE_()
++inline void IMMEDIATE_CRASH() { WRAPPED_TRAP_SEQUENCE_(); }
+ 
+ #endif  // defined(__clang__) || defined(COMPILER_GCC)
+ 

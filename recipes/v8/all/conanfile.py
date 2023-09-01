@@ -259,14 +259,15 @@ class V8Conan(ConanFile):
             "//build/config/conan/msvc:conan_crt\",\n    \"//build/config/conan/msvc:conan_ignore_warnings"
         )
 
-        # Assume the most recent Windows SDK is installed,
-        # otherwise v8 will assume the old SDK from msvc2019 era
-        # v8 wants to only use SDKs that it has tested, but I want to use a newer SDK with 2022
-        win_setup_toolchain_file = os.path.join(v8_source_root, "build", "toolchain", "win", "setup_toolchain.py")
-        replace_in_file(self, win_setup_toolchain_file,
-            "10.0.20348.0",
-            "10.0.22621.0"
-        )
+        if Version(self.version) == "11.0.226.19":
+            # Assume the most recent Windows SDK is installed,
+            # otherwise v8 will assume the old SDK from msvc2019 era
+            # v8 wants to only use SDKs that it has tested, but I want to use a newer SDK with 2022
+            win_setup_toolchain_file = os.path.join(v8_source_root, "build", "toolchain", "win", "setup_toolchain.py")
+            replace_in_file(self, win_setup_toolchain_file,
+                "10.0.20348.0",
+                "10.0.22621.0"
+            )
 
         # fix bug in BUILD.gn, was defining a header-target as a lib-target
 # ONLY in older v10 version
