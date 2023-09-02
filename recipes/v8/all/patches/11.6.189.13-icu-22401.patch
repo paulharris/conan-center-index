@@ -1,0 +1,24 @@
+From c7e967c456ceff6436607ca2a3da034320ca34c3 Mon Sep 17 00:00:00 2001
+From: Jiawen Geng <technicalcute@gmail.com>
+Date: Mon, 19 Jun 2023 04:06:48 +0000
+Subject: [PATCH] ICU-22401 fix build on MSVC with cpp20
+
+---
+ icu4c/source/i18n/fmtable.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Paths are modified to suit v8 directories.
+
+diff --git a/third_party/icu/source/i18n/fmtable.cpp b/third_party/icu/source/i18n/fmtable.cpp
+index 618868c0a2f..65dafc95aa2 100644
+--- a/third_party/icu/source/i18n/fmtable.cpp
++++ b/third_party/icu/source/i18n/fmtable.cpp
+@@ -56,7 +56,7 @@ using number::impl::DecimalQuantity;
+ // Return true if *a == *b.
+ static inline UBool objectEquals(const UObject* a, const UObject* b) {
+     // LATER: return *a == *b;
+-    return *((const Measure*) a) == *((const Measure*) b);
++    return *((const Measure*) a) == *b;
+ }
+ 
+ // Return a clone of *a.
