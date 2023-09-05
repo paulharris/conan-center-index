@@ -342,7 +342,7 @@ class V8Conan(ConanFile):
             "treat_warnings_as_errors = false",
             "is_clang = " + is_clang,
             "use_glib = false",
-            "use_sysroot = false",
+            "use_sysroot = false",  # note: warning in 11.6.189.19 that this has no effect
             "use_custom_libcxx = false",
             "use_custom_libcxx_for_host = false",
 
