@@ -1,0 +1,40 @@
+Manual cherry-pick from: 3965d52
+https://github.com/qt/qtbase/commit/3965d52ad5a6376d593026a87831026a8a5f3469
+
+QTabBar: don't make current tab visible while tab bar is invisible
+When changing the current index while the tab bar is not visible,
+calculating the necessary scroll offset might result in wrong results if
+the tab bar still has an old size. When the tab bar then gets shown and
+resized, the scroll wouldn't be corrected, potentially leaving tabs
+unnecessarily scrolled out.
+
+We don't need to make the current index visible if the tab bar itself is
+not visible, it's enough to flag the layout as dirty so that the next
+show event (which either way makes the then current index visible)
+triggers a laying out of the tab bar tabs.
+
+Amends e851d4c.
+
+Fixes: QTBUG-115109
+Task-number: QTBUG-113140
+Pick-to: 6.6 6.5
+Change-Id: I3d8633f9f8b907a36190123839a6104a17bfe138
+Reviewed-by: Qt CI Bot <qt_ci_bot@qt-project.org>
+Reviewed-by: David Faure <david.faure@kdab.com>
+Reviewed-by: Santhosh Kumar <santhosh.kumar.selvaraj@qt.io>
+Reviewed-by: Axel Spoerl <axel.spoerl@qt.io>
+
+--- src/widgets/widgets/qtabbar.cpp	2023-08-31 20:38:00.911780193 +0800
++++ src/widgets/widgets/qtabbar.cpp	2023-08-31 20:37:57.111839528 +0800
+@@ -1421,7 +1421,10 @@
+         if (tabRect(index).size() != tabSizeHint(index))
+             d->layoutTabs();
+         update();
+-        d->makeVisible(index);
++        if (!isVisible())
++           d->layoutDirty = true;
++        else
++           d->makeVisible(index);
+         if (d->validIndex(oldIndex)) {
+             tab->lastTab = oldIndex;
+             d->layoutTab(oldIndex);

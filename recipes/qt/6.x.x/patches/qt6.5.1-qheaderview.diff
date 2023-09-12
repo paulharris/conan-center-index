@@ -1,0 +1,105 @@
+From 787b4c1506aba7e83d861e178329a18c6ec34322 Mon Sep 17 00:00:00 2001
+From: Axel Spoerl <axel.spoerl@qt.io>
+Date: Tue, 13 Jun 2023 12:12:43 +0200
+Subject: QHeaderView: use correct mouse position for auto scroll
+
+QHeaderView::mouseMoveEvent started autoscroll without propagating the
+event's mouse position to QAbstractItemViewPrivate::draggedPosition.
+This data member always containing QPoint() has lead to right drags not
+causing an autoscroll at all. Left drags with a scroll offset just
+kept scrolling until the offset was 0.
+
+The missing propagation has been added.
+As a drive by, dead code has been removed and the local variable pos
+has been constified.
+
+Fixes: QTBUG-113573
+Pick-to: 6.6 6.5
+Change-Id: I7b194dfc71abea6f2bbaaae18270c80eb15afb4d
+Reviewed-by: Oliver Eftevaag <oliver.eftevaag@qt.io>
+
+~~~~ AND ~~~~
+
+From 2a1772a6499d440b9ee2435a5f0c22d93b9d8897 Mon Sep 17 00:00:00 2001
+From: Axel Spoerl <axel.spoerl@qt.io>
+Date: Thu, 22 Jun 2023 17:00:32 +0200
+Subject: QHeaderView: Don't add new sections on no-op
+
+When a table view adds its first row, QHeaderView::initializeSections()
+is called. It initializes the vertical header view with the number of
+added sections. Subsequently QHeaderView::sectionsInserted() is called
+with the same amount of newly added rows/sections.
+That leads to the initial amount of sections being 2x the number of
+rows added in the first go. In other words, the table view will display
+at least one row more than the underlying table model has.
+
+This patch adds an OR condition to the early return check at the
+beginning of QHeaderView::sectionsInserted(). The method returns early
+if the number of sections equals the number of respective sections
+(rows in this case) in the model.
+
+An autotest is added in tst_QTableView::rowsInVerticalHeader().
+
+Fixes: QTBUG-114225
+Pick-to: 6.6 6.5
+Change-Id: I895444f025591981965562e54e2335391db52357
+Reviewed-by: David Faure <david.faure@kdab.com>
+Reviewed-by: Giuseppe D'Angelo <giuseppe.dangelo@kdab.com>
+
+---
+--- src/widgets/itemviews/qheaderview.cpp	2023-08-21 11:14:52.492700717 +0800
++++ src/widgets/itemviews/qheaderview.cpp	2023-08-21 11:33:06.844741254 +0800
+@@ -1880,8 +1880,9 @@
+                                    int logicalFirst, int logicalLast)
+ {
+     Q_D(QHeaderView);
+-    if (parent != d->root)
+-        return; // we only handle changes in the root level
++    // only handle root level changes and return on no-op
++    if (parent != d->root || d->modelSectionCount() == d->sectionCount())
++        return;
+     int oldCount = d->sectionCount();
+ 
+     d->invalidateCachedSizeHint();
+@@ -2574,7 +2575,7 @@
+ void QHeaderView::mouseMoveEvent(QMouseEvent *e)
+ {
+     Q_D(QHeaderView);
+-    int pos = d->orientation == Qt::Horizontal ? e->position().toPoint().x() : e->position().toPoint().y();
++    const int pos = d->orientation == Qt::Horizontal ? e->position().toPoint().x() : e->position().toPoint().y();
+     if (pos < 0 && d->state != QHeaderViewPrivate::SelectSections)
+         return;
+     if (e->buttons() == Qt::NoButton) {
+@@ -2602,8 +2603,10 @@
+             return;
+         }
+         case QHeaderViewPrivate::MoveSection: {
+-            if (d->shouldAutoScroll(e->position().toPoint()))
++            if (d->shouldAutoScroll(e->position().toPoint())) {
++                d->draggedPosition = e->pos();
+                 d->startAutoScroll();
++            }
+             if (qAbs(pos - d->firstPos) >= QApplication::startDragDistance()
+ #if QT_CONFIG(label)
+                 || !d->sectionIndicator->isHidden()
+@@ -3800,12 +3803,9 @@
+             if (currentSectionSize <= minimumSize)
+                 continue;
+             int newSectionSize = qMax(currentSectionSize - delta, minimumSize);
+-            //qDebug() << "### cascading to" << i << newSectionSize - currentSectionSize << delta;
+             resizeSectionItem(i, currentSectionSize, newSectionSize);
+             saveCascadingSectionSize(i, currentSectionSize);
+             delta = delta - (currentSectionSize - newSectionSize);
+-            //qDebug() << "new delta" << delta;
+-            //if (newSectionSize != minimumSize)
+             if (delta <= 0)
+                 break;
+         }
+@@ -3823,7 +3823,6 @@
+             int newSectionSize = currentSectionSize - delta;
+             resizeSectionItem(i, currentSectionSize, newSectionSize);
+             if (newSectionSize >= originalSectionSize && false) {
+-                //qDebug() << "section" << i << "restored to" << originalSectionSize;
+                 cascadingSectionSize.remove(i); // the section is now restored
+             }
+             sectionResized = true;

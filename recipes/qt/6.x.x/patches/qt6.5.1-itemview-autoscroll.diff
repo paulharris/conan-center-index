@@ -1,0 +1,265 @@
+Patch by Paul Harris, in the process of submission to QT.
+Fixes terrible drag-column behaviour in QTableView when ScrollPerPixel is enabled.
+Also fixes per-item scrolling so user can drag-move a section (column) to the left.
+
+--- src/widgets/itemviews/qabstractitemview.cpp	2023-05-12 12:40:15.000000000 +0800
++++ src/widgets/itemviews/qabstractitemview.cpp	2023-09-12 12:04:37.723760691 +0800
+@@ -72,8 +72,8 @@
+         defaultDropAction(Qt::IgnoreAction),
+ #endif
+         autoScroll(true),
+-        autoScrollMargin(16),
+-        autoScrollCount(0),
++        autoScrollMargin_max(128),
++        autoScrollInterval_ms(50),
+         shouldScrollToCurrentOnShow(false),
+         shouldClearStatusTip(false),
+         alternatingColors(false),
+@@ -1411,13 +1411,13 @@
+ void QAbstractItemView::setAutoScrollMargin(int margin)
+ {
+     Q_D(QAbstractItemView);
+-    d->autoScrollMargin = margin;
++    d->autoScrollMargin_max = margin;
+ }
+ 
+ int QAbstractItemView::autoScrollMargin() const
+ {
+     Q_D(const QAbstractItemView);
+-    return d->autoScrollMargin;
++    return d->autoScrollMargin_max;
+ }
+ 
+ /*!
+@@ -1935,6 +1935,8 @@
+     const bool releaseFromDoubleClick = d->releaseFromDoubleClick;
+     d->releaseFromDoubleClick = false;
+ 
++    stopAutoScroll();
++
+     QPoint pos = event->position().toPoint();
+     QPersistentModelIndex index = indexAt(pos);
+ 
+@@ -3999,47 +4001,107 @@
+     QScrollBar *verticalScroll = verticalScrollBar();
+     QScrollBar *horizontalScroll = horizontalScrollBar();
+ 
++    QAbstractItemView::ScrollMode horizontalScrollMode = this->horizontalScrollMode();
++    QAbstractItemView::ScrollMode verticalScrollMode   = this->verticalScrollMode();
++
+     // QHeaderView does not (normally) have scrollbars
+     // It needs to use its parents scroll instead
+     QHeaderView *hv = qobject_cast<QHeaderView*>(this);
+     if (hv) {
+-        QAbstractScrollArea *parent = qobject_cast<QAbstractScrollArea*>(parentWidget());
++        QAbstractItemView *parent = qobject_cast<QAbstractItemView*>(parentWidget());
+         if (parent) {
+             if (hv->orientation() == Qt::Horizontal) {
+-                if (!hv->horizontalScrollBar() || !hv->horizontalScrollBar()->isVisible())
++                if (!hv->horizontalScrollBar() || !hv->horizontalScrollBar()->isVisible()) {
+                     horizontalScroll = parent->horizontalScrollBar();
++                    horizontalScrollMode = parent->horizontalScrollMode();
++                }
+             } else {
+-                if (!hv->verticalScrollBar() || !hv->verticalScrollBar()->isVisible())
++                if (!hv->verticalScrollBar() || !hv->verticalScrollBar()->isVisible()) {
+                     verticalScroll = parent->verticalScrollBar();
++                    verticalScrollMode = parent->verticalScrollMode();
++                }
+             }
+         }
+     }
+ 
+-    const int verticalStep = verticalScroll->pageStep();
+-    const int horizontalStep = horizontalScroll->pageStep();
+-    if (d->autoScrollCount < qMax(verticalStep, horizontalStep))
+-        ++d->autoScrollCount;
++    const float timeRatio = d->autoScrollElapsed.nsecsElapsed() / 1e6f / d->autoScrollInterval_ms;
++    d->autoScrollElapsed.restart();
+ 
+-    const int margin = d->autoScrollMargin;
+     const int verticalValue = verticalScroll->value();
+     const int horizontalValue = horizontalScroll->value();
+ 
+-    const QPoint pos = d->draggedPosition - d->offset();
++    // if we are scrolling per-pixel, then ignore this offset as it messes up the calculations
++    // when there is a cell half-visible on the left/top edge.
++    const QPoint offset(
++       horizontalScrollMode == ScrollPerPixel ? 0 : d->offset().x(),
++       verticalScrollMode   == ScrollPerPixel ? 0 : d->offset().y()
++       );
++
++
++    const QPoint pos = this->mapFromGlobal(QCursor::pos());
+     const QRect area = QWidgetPrivate::get(d->viewport)->clipRect();
+ 
++    int x_margin = std::min(area.width()  / 8, d->autoScrollMargin_max);
++    int y_margin = std::min(area.height() / 8, d->autoScrollMargin_max);
++
++    float shift_left  = ((x_margin+area.left()) - pos.x()) * timeRatio;
++    float shift_up    = ((y_margin+area.top())  - pos.y()) * timeRatio;
++    float shift_right = (pos.x() - (area.right() -x_margin)) * timeRatio;
++    float shift_down  = (pos.y() - (area.bottom()-y_margin)) * timeRatio;
++
++    bool keep_autoScrolling = false;
++
+     // do the scrolling if we are in the scroll margins
+-    if (pos.y() - area.top() < margin)
+-        verticalScroll->setValue(verticalValue - d->autoScrollCount);
+-    else if (area.bottom() - pos.y() < margin)
+-        verticalScroll->setValue(verticalValue + d->autoScrollCount);
+-    if (pos.x() - area.left() < margin)
+-        horizontalScroll->setValue(horizontalValue - d->autoScrollCount);
+-    else if (area.right() - pos.x() < margin)
+-        horizontalScroll->setValue(horizontalValue + d->autoScrollCount);
+-    // if nothing changed, stop scrolling
+-    const bool verticalUnchanged = (verticalValue == verticalScroll->value());
+-    const bool horizontalUnchanged = (horizontalValue == horizontalScroll->value());
+-    if (verticalUnchanged && horizontalUnchanged) {
++    // remember to add to the scrollbar in the correct units - whatever that scrollbar is using
++    {
++      float speed = (horizontalScrollMode == ScrollPerPixel ? 3.0f : 50.0f);
++
++      if (shift_left > 0)
++      {
++        keep_autoScrolling = true;
++        d->autoScrollRemainder_right = 0;
++        float total = shift_left / speed + d->autoScrollRemainder_left;
++        shift_left = floor(total);
++        d->autoScrollRemainder_left = total - shift_left;
++        horizontalScroll->setValue(horizontalValue - shift_left);
++      }
++      else if (shift_right > 0)
++      {
++        keep_autoScrolling = true;
++        d->autoScrollRemainder_left = 0;
++        float total = shift_right / speed + d->autoScrollRemainder_right;
++        shift_right = floor(total);
++        d->autoScrollRemainder_right = total - shift_right;
++        horizontalScroll->setValue(horizontalValue + shift_right);
++      }
++    }
++
++
++    {
++      float speed = (verticalScrollMode == ScrollPerPixel ? 3.0f : 50.0f);
++
++      if (shift_up > 0)
++      {
++        keep_autoScrolling = true;
++        d->autoScrollRemainder_down = 0;
++        float total = shift_up / speed + d->autoScrollRemainder_up;
++        shift_up = floor(total);
++        d->autoScrollRemainder_up = total - shift_up;
++        verticalScroll->setValue(verticalValue - shift_up);
++      }
++      else if (shift_down > 0)
++      {
++        keep_autoScrolling = true;
++        d->autoScrollRemainder_up = 0;
++        float total = shift_down / speed + d->autoScrollRemainder_down;
++        shift_down = floor(total);
++        d->autoScrollRemainder_down = total - shift_down;
++        verticalScroll->setValue(verticalValue + shift_down);
++      }
++    }
++
++
++    if (not keep_autoScrolling) {
+         stopAutoScroll();
+     } else {
+ #if QT_CONFIG(draganddrop)
+@@ -4064,7 +4126,7 @@
+             // update our dragged position manually after the scroll. "pos" is the old
+             // draggedPosition - d->offset(), and d->offset() is now updated after scrolling, so
+             // pos + d->offset() gives us the new position.
+-            d->draggedPosition = pos + d->offset();
++            d->draggedPosition = pos + offset;
+             break;
+         }
+         default:
+@@ -4368,10 +4430,12 @@
+     if (!autoScroll)
+         return false;
+     QRect area = static_cast<QAbstractItemView*>(viewport)->d_func()->clipRect(); // access QWidget private by bending C++ rules
+-    return (pos.y() - area.top() < autoScrollMargin)
+-        || (area.bottom() - pos.y() < autoScrollMargin)
+-        || (pos.x() - area.left() < autoScrollMargin)
+-        || (area.right() - pos.x() < autoScrollMargin);
++
++    int x_margin = std::min(area.width()  / 8, autoScrollMargin_max);
++    int y_margin = std::min(area.height() / 8, autoScrollMargin_max);
++
++    QRect boundary = area.marginsRemoved( QMargins(x_margin,y_margin,x_margin,y_margin) );
++    return not boundary.contains(pos);
+ }
+ 
+ void QAbstractItemViewPrivate::doDelayedItemsLayout(int delay)
+--- src/widgets/itemviews/qabstractitemview_p.h	2023-05-12 12:40:15.000000000 +0800
++++ src/widgets/itemviews/qabstractitemview_p.h	2023-09-12 12:04:56.359223219 +0800
+@@ -90,11 +90,14 @@
+ 
+     void startAutoScroll()
+     {   // ### it would be nice to make this into a style hint one day
+-        int scrollInterval = (verticalScrollMode == QAbstractItemView::ScrollPerItem) ? 150 : 50;
+-        autoScrollTimer.start(scrollInterval, q_func());
+-        autoScrollCount = 0;
++        autoScrollTimer.start(autoScrollInterval_ms, q_func());
++        autoScrollElapsed.restart();
++        autoScrollRemainder_left = autoScrollRemainder_right = 0;
++        autoScrollRemainder_up   = autoScrollRemainder_down  = 0;
++    }
++    void stopAutoScroll() {
++       autoScrollTimer.stop();
+     }
+-    void stopAutoScroll() { autoScrollTimer.stop(); autoScrollCount = 0;}
+ 
+ #if QT_CONFIG(draganddrop)
+     virtual bool dropOn(QDropEvent *event, int *row, int *col, QModelIndex *index);
+@@ -378,8 +381,10 @@
+ 
+     bool autoScroll;
+     QBasicTimer autoScrollTimer;
+-    int autoScrollMargin;
+-    int autoScrollCount;
++    int autoScrollMargin_max; // will be this margin, or 1/8th of the total width or height
++    int autoScrollInterval_ms;
++    QElapsedTimer autoScrollElapsed;
++    float autoScrollRemainder_left, autoScrollRemainder_right, autoScrollRemainder_up, autoScrollRemainder_down;
+     bool shouldScrollToCurrentOnShow; //used to know if we should scroll to current on show event
+     bool shouldClearStatusTip; //if there is a statustip currently shown that need to be cleared when leaving.
+ 
+--- src/widgets/itemviews/qheaderview.cpp	2023-09-12 12:02:10.380429190 +0800
++++ src/widgets/itemviews/qheaderview.cpp	2023-09-12 12:09:56.075794403 +0800
+@@ -2576,8 +2576,6 @@
+ {
+     Q_D(QHeaderView);
+     const int pos = d->orientation == Qt::Horizontal ? e->position().toPoint().x() : e->position().toPoint().y();
+-    if (pos < 0 && d->state != QHeaderViewPrivate::SelectSections)
+-        return;
+     if (e->buttons() == Qt::NoButton) {
+         // Under Cocoa, when the mouse button is released, may include an extra
+         // simulated mouse moved event. The state of the buttons when this event
+@@ -2605,7 +2603,13 @@
+         case QHeaderViewPrivate::MoveSection: {
+             if (d->shouldAutoScroll(e->position().toPoint())) {
+                 d->draggedPosition = e->pos();
+-                d->startAutoScroll();
++                if (!d->autoScrollTimer.isActive())
++                   d->startAutoScroll();
++            }
++            else {
++                if (d->autoScrollTimer.isActive()) {
++                   d->stopAutoScroll();
++                }
+             }
+             if (qAbs(pos - d->firstPos) >= QApplication::startDragDistance()
+ #if QT_CONFIG(label)
+@@ -2696,6 +2700,7 @@
+     int pos = d->orientation == Qt::Horizontal ? e->position().toPoint().x() : e->position().toPoint().y();
+     switch (d->state) {
+     case QHeaderViewPrivate::MoveSection:
++        d->stopAutoScroll();
+         if (true
+ #if QT_CONFIG(label)
+             && !d->sectionIndicator->isHidden()
