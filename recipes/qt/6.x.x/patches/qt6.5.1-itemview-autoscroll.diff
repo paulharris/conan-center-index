@@ -2,15 +2,15 @@ Patch by Paul Harris, in the process of submission to QT.
 Fixes terrible drag-column behaviour in QTableView when ScrollPerPixel is enabled.
 Also fixes per-item scrolling so user can drag-move a section (column) to the left.
 
---- src/widgets/itemviews/qabstractitemview.cpp	2023-05-12 12:40:15.000000000 +0800
-+++ src/widgets/itemviews/qabstractitemview.cpp	2023-09-12 12:04:37.723760691 +0800
+--- src/widgets/itemviews/qabstractitemview.cpp	2023-11-17 09:25:55.264686188 +0800
++++ src/widgets/itemviews/qabstractitemview.cpp	2023-11-17 12:30:17.549904918 +0800
 @@ -72,8 +72,8 @@
          defaultDropAction(Qt::IgnoreAction),
  #endif
          autoScroll(true),
 -        autoScrollMargin(16),
 -        autoScrollCount(0),
-+        autoScrollMargin_max(128),
++        autoScrollMargin_max(0),
 +        autoScrollInterval_ms(50),
          shouldScrollToCurrentOnShow(false),
          shouldClearStatusTip(false),
@@ -31,7 +31,21 @@ Also fixes per-item scrolling so user can drag-move a section (column) to the le
  }
  
  /*!
-@@ -1935,6 +1935,8 @@
+@@ -1914,10 +1914,11 @@
+         QRect selectionRect = QRect(topLeft, bottomRight);
+         setSelection(selectionRect, command);
+ 
+-        // set at the end because it might scroll the view
++        /* Instead, let autoscroll move the viewport
+         if (index.isValid() && (index != d->selectionModel->currentIndex()) && d->isIndexEnabled(index))
+             d->selectionModel->setCurrentIndex(index, QItemSelectionModel::NoUpdate);
+-        else if (d->shouldAutoScroll(event->pos()) && !d->autoScrollTimer.isActive())
++        */
++        if (d->shouldAutoScroll(event->pos()) && !d->autoScrollTimer.isActive())
+             startAutoScroll();
+     }
+ }
+@@ -1935,6 +1936,8 @@
      const bool releaseFromDoubleClick = d->releaseFromDoubleClick;
      d->releaseFromDoubleClick = false;
  
@@ -40,7 +54,7 @@ Also fixes per-item scrolling so user can drag-move a section (column) to the le
      QPoint pos = event->position().toPoint();
      QPersistentModelIndex index = indexAt(pos);
  
-@@ -3999,47 +4001,107 @@
+@@ -3999,49 +4002,112 @@
      QScrollBar *verticalScroll = verticalScrollBar();
      QScrollBar *horizontalScroll = horizontalScrollBar();
  
@@ -90,7 +104,7 @@ Also fixes per-item scrolling so user can drag-move a section (column) to the le
 +       );
 +
 +
-+    const QPoint pos = this->mapFromGlobal(QCursor::pos());
++    const QPoint pos = d->viewport->mapFromGlobal(QCursor::pos());
      const QRect area = QWidgetPrivate::get(d->viewport)->clipRect();
  
 +    int x_margin = std::min(area.width()  / 8, d->autoScrollMargin_max);
@@ -164,21 +178,29 @@ Also fixes per-item scrolling so user can drag-move a section (column) to the le
 +      }
 +    }
 +
++    const int after_verticalValue = verticalScroll->value();
++    const int after_horizontalValue = horizontalScroll->value();
 +
 +    if (not keep_autoScrolling) {
          stopAutoScroll();
-     } else {
+-    } else {
++    }
++    else if (after_verticalValue != verticalValue or after_horizontalValue != horizontalValue) {
  #if QT_CONFIG(draganddrop)
-@@ -4064,7 +4126,7 @@
+         d->dropIndicatorRect = QRect();
+         d->dropIndicatorPosition = QAbstractItemView::OnViewport;
+@@ -4064,7 +4130,9 @@
              // update our dragged position manually after the scroll. "pos" is the old
              // draggedPosition - d->offset(), and d->offset() is now updated after scrolling, so
              // pos + d->offset() gives us the new position.
 -            d->draggedPosition = pos + d->offset();
-+            d->draggedPosition = pos + offset;
++            //
++            // CHANGED: Don't adjust this anymore, it is not necessary with the improved doAutoScroll()
++            // d->draggedPosition = pos + offset;
              break;
          }
          default:
-@@ -4368,10 +4430,12 @@
+@@ -4368,10 +4436,12 @@
      if (!autoScroll)
          return false;
      QRect area = static_cast<QAbstractItemView*>(viewport)->d_func()->clipRect(); // access QWidget private by bending C++ rules
