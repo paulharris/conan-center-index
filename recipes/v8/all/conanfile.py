@@ -519,6 +519,12 @@ class V8Conan(ConanFile):
             src=os.path.join(self.build_folder, "gen", "include"),
             keep_path=True)
 
+        # we also need to keep icudata file
+        copy(self, pattern="icudtl.dat",
+            dst=os.path.join(self.package_folder, "res"),
+            src=self.build_folder,
+            keep_path=True)
+
 
     def package_info(self):
         self.cpp_info.libs = ["v8_monolith"]
