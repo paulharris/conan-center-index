@@ -1,6 +1,8 @@
+diff --git a/include/libplatform/libplatform.h b/include/libplatform/libplatform.h
+index 6a34f432410..973a2ec0e38 100644
 --- a/include/libplatform/libplatform.h
 +++ b/include/libplatform/libplatform.h
-@@ -100,6 +100,15 @@
+@@ -106,6 +106,15 @@ V8_PLATFORM_EXPORT void RunIdleTasks(v8::Platform* platform,
  V8_PLATFORM_EXPORT void NotifyIsolateShutdown(v8::Platform* platform,
                                                Isolate* isolate);
  
@@ -16,9 +18,11 @@
  }  // namespace platform
  }  // namespace v8
  
+diff --git a/src/base/platform/platform-posix.cc b/src/base/platform/platform-posix.cc
+index 116ba4f9d9f..44caacd465d 100644
 --- a/src/base/platform/platform-posix.cc
 +++ b/src/base/platform/platform-posix.cc
-@@ -92,6 +92,13 @@
+@@ -93,6 +93,13 @@ extern "C" void* __libc_stack_end;
  #endif
  
  namespace v8 {
@@ -32,7 +36,7 @@
  namespace base {
  
  namespace {
-@@ -670,9 +677,23 @@
+@@ -692,6 +699,19 @@ void OS::Sleep(TimeDelta interval) {
  
  
  void OS::Abort() {
@@ -49,16 +53,14 @@
 +     OS::Sleep( TimeDelta::FromSeconds(10) );
 +  }
 +
-   if (g_hard_abort) {
-     IMMEDIATE_CRASH();
-   }
-+
-   // Redirect to std abort to signal abnormal program termination.
-   abort();
- }
+   switch (g_abort_mode) {
+     case AbortMode::kSoft:
+       _exit(-1);
+diff --git a/src/base/platform/platform-win32.cc b/src/base/platform/platform-win32.cc
+index a5558c738ba..ce137dc02e5 100644
 --- a/src/base/platform/platform-win32.cc
 +++ b/src/base/platform/platform-win32.cc
-@@ -132,6 +132,13 @@
+@@ -134,6 +134,13 @@ int strncpy_s(char* dest, size_t dest_size, const char* source, size_t count) {
  #endif  // __MINGW32__
  
  namespace v8 {
@@ -72,10 +74,12 @@
  namespace base {
  
  namespace {
-@@ -1140,6 +1147,17 @@
+@@ -1203,6 +1210,19 @@ void OS::Abort() {
    fflush(stdout);
    fflush(stderr);
  
++  ::v8::platform::patch_v8_is_aborting = true;
++
 +  // check every 10 secs if it is time to die
 +  for (unsigned int s = 0;
 +        ::v8::platform::patch_v8_abort_delay_secs == 0 ||
@@ -87,12 +91,14 @@
 +     OS::Sleep( TimeDelta::FromSeconds(10) );
 +  }
 +
-   if (g_hard_abort) {
-     IMMEDIATE_CRASH();
-   }
+   switch (g_abort_mode) {
+     case AbortMode::kSoft:
+       _exit(-1);
+diff --git a/src/libplatform/default-platform.cc b/src/libplatform/default-platform.cc
+index 958aa0b9841..6cf270446ea 100644
 --- a/src/libplatform/default-platform.cc
 +++ b/src/libplatform/default-platform.cc
-@@ -285,5 +285,26 @@
+@@ -301,5 +301,26 @@ void DefaultPlatform::NotifyIsolateShutdown(Isolate* isolate) {
    taskrunner->Terminate();
  }
  

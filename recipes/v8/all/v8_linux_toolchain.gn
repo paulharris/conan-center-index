@@ -1,29 +1,10 @@
 import("//build/toolchain/gcc_toolchain.gni")
 
 gcc_toolchain("gcc_x86") {
-  if (getenv("CC") == "") {
-    cc = "gcc"
-  } else {
-    cc = getenv("CC")
-  }
-
-  if (getenv("CXX") == "") {
-    cxx = "g++"
-  } else {
-    cxx = getenv("CXX")
-  }
-
-  if (getenv("AR") == "") {
-    ar = "ar"
-  } else {
-    ar = getenv("AR")
-  }
-
-  if (getenv("NM") == "") {
-    nm = "nm"
-  } else {
-    nm  = getenv("NM")
-  }
+  cc = "conan_compiler_cc"
+  cxx = "conan_compiler_cxx"
+  ar = "ar"
+  nm = "nm"
 
   readelf = "readelf"
   ld = cxx
@@ -40,30 +21,10 @@ gcc_toolchain("gcc_x86") {
 
 
 gcc_toolchain("gcc_x86_64") {
-  if (getenv("CC") == "") {
-    cc = "gcc"
-  } else {
-    cc = getenv("CC")
-  }
-
-  if (getenv("CXX") == "") {
-    cxx = "g++"
-  } else {
-    cxx = getenv("CXX")
-  }
-
-  if (getenv("AR") == "") {
-    ar = "ar"
-  } else {
-    ar = getenv("AR")
-  }
-
-  if (getenv("NM") == "") {
-    nm = "nm"
-  } else {
-    nm  = getenv("NM")
-  }
-
+  cc = "conan_compiler_cc"
+  cxx = "conan_compiler_cxx"
+  ar = "ar"
+  nm = "nm"
   readelf = "readelf"
   ld = cxx
 
@@ -79,32 +40,12 @@ gcc_toolchain("gcc_x86_64") {
 
 
 gcc_toolchain("clang_x86") {
-  if (getenv("CC") == "") {
-    cc = "clang"
-  } else {
-    cc = getenv("CC")
-  }
-
-  if (getenv("CXX") == "") {
-    cxx = "clang++"
-  } else {
-    cxx = getenv("CXX")
-  }
-
-  if (getenv("AR") == "") {
-    ar = "ar"
-  } else {
-    ar = getenv("AR")
-  }
-
-  if (getenv("NM") == "") {
-    nm = "nm"
-  } else {
-    nm  = getenv("NM")
-  }
-
-  ld = cxx
+  cc = "conan_compiler_cc"
+  cxx = "conan_compiler_cxx"
+  ar = "ar"
+  nm = "nm"
   readelf = "readelf"
+  ld = cxx
 
   # Output linker map files for binary size analysis.
   enable_linker_map = true
@@ -116,32 +57,12 @@ gcc_toolchain("clang_x86") {
 }
 
 gcc_toolchain("clang_x86_64") {
-  if (getenv("CC") == "") {
-    cc = "clang"
-  } else {
-    cc = getenv("CC")
-  }
-
-  if (getenv("CXX") == "") {
-    cxx = "clang++"
-  } else {
-    cxx = getenv("CXX")
-  }
-
-  if (getenv("AR") == "") {
-    ar = "ar"
-  } else {
-    ar = getenv("AR")
-  }
-
-  if (getenv("NM") == "") {
-    nm = "nm"
-  } else {
-    nm  = getenv("NM")
-  }
-
-  ld = cxx
+  cc = "conan_compiler_cc"
+  cxx = "conan_compiler_cxx"
+  ar = "ar"
+  nm = "nm"
   readelf = "readelf"
+  ld = cxx
 
   # Output linker map files for binary size analysis.
   enable_linker_map = true

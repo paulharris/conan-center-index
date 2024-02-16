@@ -1,3 +1,4 @@
+# TODO: each time this recipe is executed, /home/user/.cache/.python-venv adds another folder ~280MB and will consume the disk...
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import build_jobs
@@ -5,6 +6,9 @@ from conan.tools.env import Environment
 from conan.tools.files import apply_conandata_patches, export_conandata_patches, chdir, mkdir, replace_in_file, copy
 from conan.tools.microsoft import check_min_vs, is_msvc_static_runtime, is_msvc, msvc_runtime_flag
 from conan.tools.scm import Version, Git
+
+# for source-from-tarball
+from conan.tools.files import get
 
 import os
 import re
@@ -51,7 +55,12 @@ class V8Conan(ConanFile):
             # Note that I was not able to successfully build with the _8gb flag on Linux.
             "v8_enable_pointer_compression":        ["default", True, False],
             "v8_enable_pointer_compression_8gb":    ["default", True, False],
+
+# TODO try #            # use external ICU, or v8's bundled ICU
+# TODO try #            # with no ICU, i18n support will be disabled
+# TODO try #            "use_icu":  ["none", "bundled", "system"],
             }
+
     default_options = {
             "shared":   False,
             "fPIC":     True,
@@ -68,6 +77,9 @@ class V8Conan(ConanFile):
 
             "v8_enable_pointer_compression":        "default",
             "v8_enable_pointer_compression_8gb":    "default",
+
+# TODO try #            # use system (conan) supplied ICU by default
+# TODO try #            "use_icu":  "system",
             }
 
     short_paths = True
@@ -152,14 +164,14 @@ class V8Conan(ConanFile):
 
     def build_requirements(self):
         if not shutil.which("ninja"):
-            self.tool_requires("ninja/1.11.1")
+            self.tool_requires("ninja/[>=1]")
         if self.settings.os != "Windows":
             if not shutil.which("bison"):
-                self.tool_requires("bison/3.8.2")
+                self.tool_requires("bison/[>=3.8.2]")
             if not shutil.which("gperf"):
-                self.tool_requires("gperf/3.1")
+                self.tool_requires("gperf/[>=3.1]")
             if not shutil.which("flex"):
-                self.tool_requires("flex/2.6.4")
+                self.tool_requires("flex/[>=2.6.4]")
 
     def _make_environment(self):
         """set the environment variables, such that the google tooling is found (including the bundled python2)"""
@@ -195,10 +207,17 @@ class V8Conan(ConanFile):
         return env
 
     def source(self):
+        if True:
+            get(self, "file:///build/mx/v8-src.tar", strip_root=True)
+            return
+
+        # else, do the long and involved git method
         git = Git(self)
         depot_repo = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
         git.clone(url=depot_repo, target="depot_tools", args=["--depth","1"])
 
+        # Note: switching source based on platform/compiler/etc is not recommended in source() as the configuration can change with the next build.
+        # however, the source is HUGE, so lets do this switch.
         if self.info.settings.os == "Macos" and self.gn_arch == "arm64":
             mkdir(self, "v8")
             with chdir(self, "v8"):
@@ -220,7 +239,6 @@ class V8Conan(ConanFile):
             "x86_64": "x64",
             "armv8": "arm64"
         }
-
         arch = str(self.info.settings.arch)
         return arch_map.get(arch, arch)
 
@@ -259,28 +277,36 @@ class V8Conan(ConanFile):
             "//build/config/conan/msvc:conan_crt\",\n    \"//build/config/conan/msvc:conan_ignore_warnings"
         )
 
-        if Version(self.version) == "11.0.226.19":
-            # Assume the most recent Windows SDK is installed,
-            # otherwise v8 will assume the old SDK from msvc2019 era
-            # v8 wants to only use SDKs that it has tested, but I want to use a newer SDK with 2022
-            win_setup_toolchain_file = os.path.join(v8_source_root, "build", "toolchain", "win", "setup_toolchain.py")
-            replace_in_file(self, win_setup_toolchain_file,
-                "10.0.20348.0",
-                "10.0.22621.0"
-            )
-
-        # fix bug in BUILD.gn, was defining a header-target as a lib-target
-# ONLY in older v10 version
-#        build_gn_file = os.path.join(v8_source_root, "BUILD.gn")
-#        replace_in_file(self, build_gn_file,
-#            "v8_source_set(\"v8_heap_base_headers\") {",
-#            "v8_header_set(\"v8_heap_base_headers\") {"
-#        )
+        # Kept for future reference... in case we need to adjust the Windows SDK used
+        # if Version(self.version) == "11.0.226.19":
+        #     # Assume the most recent Windows SDK is installed,
+        #     # otherwise v8 will assume the old SDK from msvc2019 era
+        #     # v8 wants to only use SDKs that it has tested, but I want to use a newer SDK with 2022
+        #     win_setup_toolchain_file = os.path.join(v8_source_root, "build", "toolchain", "win", "setup_toolchain.py")
+        #     replace_in_file(self, win_setup_toolchain_file,
+        #         "10.0.20348.0",
+        #         "10.0.22621.0"
+        #     )
 
     def _define_conan_toolchain(self):
         v8_source_root = os.path.join(self.source_folder, "v8")
         conan_toolchain_folder = os.path.join(v8_source_root, "build", "toolchain", "conan", "linux")
         self._patch_gn_build_system("v8_linux_toolchain.gn", conan_toolchain_folder)
+
+        # get compilers and set them up
+        compilers_from_conf = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
+        cc = compilers_from_conf.get("c", "UNKNOWN")
+        cxx = compilers_from_conf.get("cpp", "UNKNOWN")
+
+        replace_in_file(self, os.path.join(conan_toolchain_folder, "BUILD.gn"),
+                "conan_compiler_cc",
+                cc
+                )
+
+        replace_in_file(self, os.path.join(conan_toolchain_folder, "BUILD.gn"),
+                "conan_compiler_cxx",
+                cxx
+                )
 
     def _path_compiler_config(self):
         v8_source_root = os.path.join(self.source_folder, "v8")
@@ -394,6 +420,9 @@ class V8Conan(ConanFile):
             "treat_warnings_as_errors = false",
 
             # TODO consider concurrent_links = NUM to reduce number of parallel linker executions (they consume a lot of memory)
+
+            # we won't use the GDBJIT interface: https://v8.dev/docs/gdb-jit
+            "v8_enable_gdbjit = false,
         ]
 
         if self.options.use_rtti != "default":
@@ -404,6 +433,13 @@ class V8Conan(ConanFile):
 
         if self.options.v8_enable_pointer_compression_8gb != "default":
             gen_arguments += ["v8_enable_pointer_compression_8gb = %s" % ("true" if self.options.v8_enable_pointer_compression_8gb else "false")]
+
+# TODO try #        if self.options.use_icu == "none":
+# TODO try #            gen_arguments += ["v8_enable_i18n_support = false"]
+# TODO try #        elif self.options.use_icu == "bundled":
+# TODO try #            pass
+# TODO try #        elif self.options.use_icu == "system":
+# TODO try #            gen_arguments += ["use_system_icu = 1"]
 
         if self.info.settings.os == "Windows":
             gen_arguments += [
@@ -486,6 +522,15 @@ class V8Conan(ConanFile):
                 print(generator_call)
                 self.run(generator_call)
                 num_parallel = build_jobs(self)
+
+                # not sure why in version 12, it couldn't find the v8-gn.h header
+                # so we will build it and then copy it into place for the rest of the build to find.
+                self.run(f"ninja -v -j {num_parallel} -C {self.build_folder} gen_v8_gn")
+                copy(self, pattern="*.h",
+                    dst=os.path.join(self.build_folder, "v8", "include"),
+                    src=os.path.join(self.build_folder, "gen", "include"),
+                    keep_path=True)
+
                 self.run(f"ninja -v -j {num_parallel} -C {self.build_folder} v8_monolith")
 
 
@@ -515,7 +560,7 @@ class V8Conan(ConanFile):
 
         # headers generated during build
         copy(self, pattern="*.h",
-            dst=os.path.join(self.package_folder, "include"),
+            dst=os.path.join(self.package_folder, "v8", "include"),
             src=os.path.join(self.build_folder, "gen", "include"),
             keep_path=True)
 

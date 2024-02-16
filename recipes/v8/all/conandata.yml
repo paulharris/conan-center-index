@@ -1,4 +1,13 @@
 patches:
+  "12.1.285.28":
+    - patch_file: "patches/12.1.285.28-delayed-abort.patch"
+      base_path: "v8"
+    - patch_file: "patches/11.6.189.13-immediate-crash.patch"
+      base_path: "v8"
+    - patch_file: "patches/11.6.189.13-remembered-set.patch"
+      base_path: "v8"
+    - patch_file: "patches/11.6.189.13-icu-22401.patch"
+      base_path: "v8"
   "11.6.189.19":
     - patch_file: "patches/11.6.189.13-delayed-abort.patch"
       base_path: "v8"
@@ -7,11 +16,4 @@ patches:
     - patch_file: "patches/11.6.189.13-remembered-set.patch"
       base_path: "v8"
     - patch_file: "patches/11.6.189.13-icu-22401.patch"
-      base_path: "v8"
-  "11.0.226.19":
-    - patch_file: "patches/11.0.226.13-delayed-abort.patch"
-      base_path: "v8"
-    - patch_file: "patches/11.0.226.13-immediate-crash.patch"
-      base_path: "v8"
-    - patch_file: "patches/11.0.226.13-remembered-set.patch"
       base_path: "v8"
