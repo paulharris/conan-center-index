@@ -154,6 +154,8 @@ class V8Conan(ConanFile):
 
     def configure(self):
         self._uses_msvc_runtime()   # will raise Exception if invalid
+        if self.version == "12.1.285.28" and self.settings.compiler == "gcc" and self.settings.compiler.version != "9":
+            raise ConanInvalidConfiguration("V8 doesn't appear to compile with newer GCCs, due to stricter language rules (related to constexpr use-before-definition). As of V8 12.1.x and 12.3.x, the chromium buildbots are still on GCC-9, so the errors aren't apparent to the project developers.  There do seem to be some patches in the pipeline for GCC-12+, so perhaps it will be fixed in the future."
 
     def system_requirements(self):
         # TODO this isn't allowed ...
@@ -422,7 +424,7 @@ class V8Conan(ConanFile):
             # TODO consider concurrent_links = NUM to reduce number of parallel linker executions (they consume a lot of memory)
 
             # we won't use the GDBJIT interface: https://v8.dev/docs/gdb-jit
-            "v8_enable_gdbjit = false,
+            "v8_enable_gdbjit = false",
         ]
 
         if self.options.use_rtti != "default":
