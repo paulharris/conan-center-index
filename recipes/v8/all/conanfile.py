@@ -599,9 +599,11 @@ class V8Conan(ConanFile):
                 src=os.path.join(self.build_folder, "v8", "include"),
                 keep_path=True)
 
-        # headers generated during build
+        # headers generated during build, including v8-gn.h (already in include dir!)
+        # but especially the inspector/*.h headers, for v8-inspector-protocol.h to include
+        # eg inspector/Debugger.h
         copy(self, pattern="*.h",
-            dst=os.path.join(self.package_folder, "v8", "include"),
+            dst=os.path.join(self.package_folder, "include"),
             src=os.path.join(self.build_folder, "gen", "include"),
             keep_path=True)
 
