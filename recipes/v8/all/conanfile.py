@@ -314,6 +314,13 @@ class V8Conan(ConanFile):
                 cxx
                 )
 
+        # v8 12.1.x wanted to add this warning in the compiler flags,
+        # but clang-17 didn't support it.
+        if "clang" in str(self.info.settings.compiler).lower():
+            compiler_build_gn = os.path.join(v8_source_root, "build", "config", "compiler", "BUILD.gn")
+            replace_in_file( self, compiler_build_gn, "-Wno-thread-safety-reference-return", "")
+
+
     def _path_compiler_config(self):
         v8_source_root = os.path.join(self.source_folder, "v8")
         libcxx_config_folder = os.path.join(v8_source_root, "build", "config", "conan", "libcxx")
@@ -354,6 +361,34 @@ class V8Conan(ConanFile):
             # set "is_official_build" to true for any build intended to ship to end-users.
             #
             "is_official_build = %s" % ("false" if want_debug else "true"),
+            #
+            # Disable PGO, it requires (large) profiles to be downloaded,
+            # need to add "checkout_pgo_profiles": True to 'custom_vars' in .gclient config,
+            # and then run "gclient runhooks", but it didn't work for me (nothing downloaded).
+            # Expecting to find (eg) v8/tools/builtins-pgo/profiles/x86.profile 
+            "chrome_pgo_phase = 0",
+
+            #
+            # Disable sanitizers, there is a TODO in v8 to disable for official builds
+            "is_cfi = false",
+
+            # Pretend we are doing the "android mainline" which uses clang17 and disables
+            # some of the advanced clang18 stuff that aren't supported in clang17
+            "llvm_android_mainline = true",
+
+            # Tell v8 where our "clang base path" is, don't leave it set to default
+            'clang_base_path = "/usr/lib/llvm-17"',
+            'clang_version = 17',
+
+            # Disable these, they add more flags that aren't supported by regular compilers
+            'find_bad_constructs = false',
+            'clang_use_chrome_plugins = false',
+
+            # don't ask v8 to use a particular linker
+            'use_lld = false',
+            'use_gold = false',
+            'use_thin_lto = false', # LTO not supported without LLD
+
             #
             # and, ensure dcheck is off as well
             "dcheck_always_on = false",
@@ -596,4 +631,4 @@ class V8Conan(ConanFile):
             # self.cpp_info.defines += [ "_HAS_ITERATOR_DEBUGGING=0" ]
         elif self.settings.os == "Linux":
             self.cpp_info.cxxflags.append("-pthread")
-            self.cpp_info.system_libs.extend(["pthread","dl"])
+            self.cpp_info.system_libs.extend(["pthread","dl","atomic"])
