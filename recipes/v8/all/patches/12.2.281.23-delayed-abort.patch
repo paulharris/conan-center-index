@@ -1,0 +1,99 @@
+--- a/include/libplatform/libplatform.h	2024-04-12 09:49:50.000000000 +0800
++++ b/include/libplatform/libplatform.h	2024-04-12 14:17:06.565984817 +0800
+@@ -106,6 +106,15 @@
+ V8_PLATFORM_EXPORT void NotifyIsolateShutdown(v8::Platform* platform,
+                                               Isolate* isolate);
+ 
++// number of seconds before the abort is executed (sleeps until then)
++V8_PLATFORM_EXPORT void patch_v8_SetAbortDelay( unsigned int secs );
++
++// notify v8 that it can let its isolates on lifesupport that it is ok to die
++V8_PLATFORM_EXPORT void patch_v8_OkToDie();
++
++// true if v8 has been instructed to abort the whole process
++V8_PLATFORM_EXPORT bool patch_v8_IsAborting();
++
+ }  // namespace platform
+ }  // namespace v8
+ 
+--- a/src/base/platform/platform.cc	2024-04-12 09:49:50.000000000 +0800
++++ b/src/base/platform/platform.cc	2024-04-12 14:31:15.396558822 +0800
+@@ -5,6 +5,16 @@
+ #include "src/base/platform/platform.h"
+ 
+ namespace v8 {
++namespace platform {
++   bool patch_v8_is_aborting = false;
++   bool patch_v8_ok_to_die = false;
++   unsigned int patch_v8_abort_delay_secs = 0;   // 0 = infinite
++
++   bool & ref_patch_v8_is_aborting() { return patch_v8_is_aborting; }
++   bool & ref_patch_v8_ok_to_die() { return patch_v8_ok_to_die; }
++   unsigned int & ref_patch_v8_abort_delay_secs() { return patch_v8_abort_delay_secs; }
++}
++
+ namespace base {
+ 
+ namespace {
+--- a/src/base/platform/platform.h	2024-04-12 09:57:24.000000000 +0800
++++ b/src/base/platform/platform.h	2024-04-12 14:31:15.404558771 +0800
+@@ -66,6 +66,12 @@
+ 
+ namespace v8 {
+ 
++namespace platform {
++   V8_BASE_EXPORT bool & ref_patch_v8_is_aborting();
++   V8_BASE_EXPORT bool & ref_patch_v8_ok_to_die();
++   V8_BASE_EXPORT unsigned int & ref_patch_v8_abort_delay_secs();   // 0 = infinite
++}
++
+ namespace internal {
+ class HandleHelper;
+ }
+--- a/src/base/platform/platform-posix.cc	2024-04-12 09:57:24.000000000 +0800
++++ b/src/base/platform/platform-posix.cc	2024-04-12 14:37:21.044776712 +0800
+@@ -692,6 +692,19 @@
+ 
+ 
+ void OS::Abort() {
++  ::v8::platform::ref_patch_v8_is_aborting() = true;
++
++  // check every 10 secs if it is time to die
++  for (unsigned int s = 0;
++        ::v8::platform::ref_patch_v8_abort_delay_secs() == 0 ||
++        s < ::v8::platform::ref_patch_v8_abort_delay_secs()-1;
++        s += 10)
++  {
++     if (::v8::platform::ref_patch_v8_ok_to_die())
++        break;
++     OS::Sleep( TimeDelta::FromSeconds(10) );
++  }
++
+   switch (g_abort_mode) {
+     case AbortMode::kSoft:
+       _exit(-1);
+--- a/src/libplatform/default-platform.cc	2024-04-12 09:49:50.000000000 +0800
++++ b/src/libplatform/default-platform.cc	2024-04-12 14:31:43.320380789 +0800
+@@ -302,5 +302,22 @@
+   taskrunner->Terminate();
+ }
+ 
++
++void patch_v8_OkToDie()
++{
++   ref_patch_v8_ok_to_die() = true;
++}
++
++void patch_v8_SetAbortDelay( unsigned int secs )
++{
++   ref_patch_v8_abort_delay_secs() = secs;
++}
++
++bool patch_v8_IsAborting()
++{
++   return ref_patch_v8_is_aborting();
++}
++
++
+ }  // namespace platform
+ }  // namespace v8

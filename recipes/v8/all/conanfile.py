@@ -1,4 +1,7 @@
 # TODO: each time this recipe is executed, /home/user/.cache/.python-venv adds another folder ~280MB and will consume the disk...
+
+# TODO: increase memory access: https://groups.google.com/g/v8-dev/c/-k10-Qmy1f8/m/1kEWMNMFAgAJ
+
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import build_jobs
@@ -56,9 +59,17 @@ class V8Conan(ConanFile):
             # not if doing monolithic # "use_external_startup_data": [True, False],
 
             # Disable pointer compression:  Can address more memory.
-            # Note that I was not able to successfully build with the _8gb flag on Linux.
-            "v8_enable_pointer_compression":        ["default", True, False],
-            "v8_enable_pointer_compression_8gb":    ["default", True, False],
+            # NOT NEEDED ... "v8_enable_pointer_compression":        ["default", True, False],
+            # NOT NEEDED ... "v8_enable_pointer_compression_8gb":    ["default", True, False],
+
+            "is_debug":          [False, True],     # because, we often want release versions in a debug context
+            "dcheck_always_on":  [False, True],
+            "symbol_level":      ["default", 0, 1, 2],
+
+            "v8_enable_sandbox": [False, True], # if true, allows engine to work with memory allocated outside the sandbox
+
+            "v8_enable_webassembly": [False, True],
+
 
 # TODO try #            # use external ICU, or v8's bundled ICU
 # TODO try #            # with no ICU, i18n support will be disabled
@@ -79,8 +90,16 @@ class V8Conan(ConanFile):
 
             # not if doing monolithic # "use_external_startup_data": False,
 
-            "v8_enable_pointer_compression":        "default",
-            "v8_enable_pointer_compression_8gb":    "default",
+            # NOT NEEDED ... "v8_enable_pointer_compression":        "default",
+            # NOT NEEDED ... "v8_enable_pointer_compression_8gb":    "default",
+
+            "is_debug":          False,     # because, we often want release versions in a debug context
+            "dcheck_always_on":  False,
+            "symbol_level":      "default",
+
+            "v8_enable_sandbox": False,
+
+            "v8_enable_webassembly": False,
 
 # TODO try #            # use system (conan) supplied ICU by default
 # TODO try #            "use_icu":  "system",
@@ -158,7 +177,7 @@ class V8Conan(ConanFile):
 
     def configure(self):
         self._uses_msvc_runtime()   # will raise Exception if invalid
-        if self.version == "12.1.285.28" and self.settings.compiler == "gcc" and self.settings.compiler.version != "9":
+        if self.settings.compiler == "gcc" and self.settings.compiler.version != "9":
             raise ConanInvalidConfiguration("V8 doesn't appear to compile with newer GCCs, due to stricter language rules (related to constexpr use-before-definition). As of V8 12.1.x and 12.3.x, the chromium buildbots are still on GCC-9, so the errors aren't apparent to the project developers.  There do seem to be some patches in the pipeline for GCC-12+, so perhaps it will be fixed in the future.")
 
     def system_requirements(self):
@@ -214,7 +233,11 @@ class V8Conan(ConanFile):
 
     def source(self):
         if True:
-            get(self, "file:///build/mx/v8-src.tar", strip_root=True)
+        # if False:
+            # NOTE: To make a new tar file:
+            #   cd ~/.conan2/p/v8WHATEVERHASH/s
+            #   tar cf /build/mx/v8-src-VERSION.NUM.tar .
+            get(self, "file:///build/mx/v8-src-{}.tar".format(self.version), strip_root=False)
             return
 
         # else, do the long and involved git method
@@ -238,6 +261,7 @@ class V8Conan(ConanFile):
             with chdir(self, "v8"):
                 self.run("git checkout {}".format(self.version))
                 self.run("gclient sync")
+                self.run("gclient sync -D")  # remove dependency folders that have been removed since last sync
 
     @property
     def gn_arch(self):
@@ -315,8 +339,8 @@ class V8Conan(ConanFile):
                 )
 
         # v8 12.1.x wanted to add this warning in the compiler flags,
-        # but clang-17 didn't support it.
-        if "clang" in str(self.info.settings.compiler).lower():
+        # but clang-17 didn't support it. .. TODO how to do version-lower-than
+        if "clang" in str(self.info.settings.compiler).lower() and self.settings.compiler.version == "17":
             compiler_build_gn = os.path.join(v8_source_root, "build", "config", "compiler", "BUILD.gn")
             replace_in_file( self, compiler_build_gn, "-Wno-thread-safety-reference-return", "")
 
@@ -348,7 +372,6 @@ class V8Conan(ConanFile):
         # Refer to v8/infra/mb/mb_config.pyl
         # TODO check if we can build Release and link to Debug consumer
         want_debug = str(self.info.settings.build_type) == "Debug"
-        is_clang = "true" if ("clang" in str(self.info.settings.compiler).lower()) else "false"
 
         gen_arguments = [
             # Notes on how other embedders compile:
@@ -369,20 +392,9 @@ class V8Conan(ConanFile):
             "chrome_pgo_phase = 0",
 
             #
-            # Disable sanitizers, there is a TODO in v8 to disable for official builds
+            # Disable sanitizers, there is a TODO in v8 to remove this flag for official builds
+            # HOWEVER, not sure if removal ==> true or false
             "is_cfi = false",
-
-            # Pretend we are doing the "android mainline" which uses clang17 and disables
-            # some of the advanced clang18 stuff that aren't supported in clang17
-            "llvm_android_mainline = true",
-
-            # Tell v8 where our "clang base path" is, don't leave it set to default
-            'clang_base_path = "/usr/lib/llvm-17"',
-            'clang_version = 17',
-
-            # Disable these, they add more flags that aren't supported by regular compilers
-            'find_bad_constructs = false',
-            'clang_use_chrome_plugins = false',
 
             # don't ask v8 to use a particular linker
             'use_lld = false',
@@ -391,7 +403,7 @@ class V8Conan(ConanFile):
 
             #
             # and, ensure dcheck is off as well
-            "dcheck_always_on = false",
+            "dcheck_always_on = {}".format("true" if self.options.dcheck_always_on else "false"),
 
             "is_debug = %s" % ("true" if want_debug else "false"),
 
@@ -400,14 +412,8 @@ class V8Conan(ConanFile):
 
             "target_cpu = \"%s\"" % self.gn_arch,
 
-            # TODO test this, might be faster to link than monolith? for debug cycles
-            # Note: Can't enable this on iOS
-            # This isn't possible with monolith
-            "is_component_build = false",
-
             "is_chrome_branded = false",
             "treat_warnings_as_errors = false",
-            "is_clang = " + is_clang,
             "use_glib = false",
             "use_sysroot = false",  # note: warning in 11.6.189.19 that this has no effect
             "use_custom_libcxx = false",
@@ -415,12 +421,19 @@ class V8Conan(ConanFile):
 
             # monolithic creates one library from the multiple components,
             # AND includes the external startup data internally (I think)
-            "v8_monolithic = true",
+            # "v8_monolithic = %s" % ("true" if self.options.v8_monolithic else "false"),
+            # ALWAYS do monolithic for static builds, and always do component builds for shared builds
+            "v8_monolithic = {}".format("true" if not self.options.shared else "false"),
+            "v8_static_library = {}".format("false" if self.options.shared else "true"),
+
+            # Note: Can't enable this on iOS
+            # This isn't possible with monolith, will build in shared libs
+            "is_component_build = {}".format("true" if self.options.shared else "false"),
 
             # Keep the number of symbols small
             # TODO: symbol_level = -1 (auto) 0 (no syms) 1 (minimum syms for backtrace) 2 (full syms)
-            "symbol_level = 0",
-            "v8_symbol_level = 0",
+# CRASH TESTING #            "symbol_level = 0",
+# CRASH TESTING #            "v8_symbol_level = 0",
 
             # Generate an external header with all the necessary external V8 defines
             "v8_generate_external_defines_header = true",
@@ -429,8 +442,8 @@ class V8Conan(ConanFile):
             # On by default with caged heap, which is enabled by default on x64 ...  "cppgc_enable_young_generation = true",
             # Don't need? "v8_enable_backtrace = true",
             # Don't need? "v8_enable_disassembler = true",
-            "v8_enable_i18n_support = true",    # might be useful
-            "v8_enable_object_print = true",    # might be useful
+# CRASH TESTING #            "v8_enable_i18n_support = true",    # might be useful
+# CRASH TESTING #            "v8_enable_object_print = true",    # might be useful
 
             # Don't need? Debugging? "v8_enable_verify_heap = true",
 
@@ -455,10 +468,11 @@ class V8Conan(ConanFile):
             # https://www.electronjs.org/blog/v8-memory-cage
             #
             # TODO: We might need to also disable cppgc_enable_caged_heap and young-generation and pointer-compression?
-            "v8_enable_sandbox = false",
+            "v8_enable_sandbox = {}".format("true" if self.options.v8_enable_sandbox else "false"),
+# CRASH TESTING #            "cppgc_enable_young_generation = false",
+# CRASH TESTING #            "cppgc_enable_caged_heap = false",
 
-            # don't let compiler warnings stop us
-            "treat_warnings_as_errors = false",
+            "v8_enable_webassembly = {}".format("true" if self.options.v8_enable_webassembly else "false"),
 
             # TODO consider concurrent_links = NUM to reduce number of parallel linker executions (they consume a lot of memory)
 
@@ -466,14 +480,40 @@ class V8Conan(ConanFile):
             "v8_enable_gdbjit = false",
         ]
 
+
+        is_clang = "true" if ("clang" in str(self.info.settings.compiler).lower()) else "false"
+        gen_arguments += ["is_clang = " + is_clang]
+
+        if is_clang:
+            gen_arguments += [
+                    # Not needed in 12.2 ... 'find_bad_constructs = false',
+
+                    # Disable these, they add more flags that aren't supported by regular compilers
+                    # This flag is used when using Chrome-specific compiler plugins, with Chrome's clang.
+                    'clang_use_chrome_plugins = false',
+
+                    # Tell v8 where our "clang base path" is, don't leave it set to default
+                    f'clang_base_path = "/usr/lib/llvm-{self.settings.compiler.version}"',
+                    f'clang_version = {self.settings.compiler.version}',
+                ]
+            if self.settings.compiler.version == "17":
+                gen_arguments += [
+                        # Pretend we are doing the "android mainline" which uses clang17 and disables
+                        # some of the advanced clang18 stuff that aren't supported in clang17
+                        "llvm_android_mainline = true"
+                    ]
+
+        if self.options.symbol_level != "default":
+            gen_arguments += [f"symbol_level = {self.options.symbol_level}"]
+
         if self.options.use_rtti != "default":
             gen_arguments += ["use_rtti = %s" % ("true" if self.options.use_rtti else "false")]
 
-        if self.options.v8_enable_pointer_compression != "default":
-            gen_arguments += ["v8_enable_pointer_compression = %s" % ("true" if self.options.v8_enable_pointer_compression else "false")]
+# CRASH TESTING #        if self.options.v8_enable_pointer_compression != "default":
+# CRASH TESTING #            gen_arguments += ["v8_enable_pointer_compression = %s" % ("true" if self.options.v8_enable_pointer_compression else "false")]
 
-        if self.options.v8_enable_pointer_compression_8gb != "default":
-            gen_arguments += ["v8_enable_pointer_compression_8gb = %s" % ("true" if self.options.v8_enable_pointer_compression_8gb else "false")]
+# CRASH TESTING #        if self.options.v8_enable_pointer_compression_8gb != "default":
+# CRASH TESTING #            gen_arguments += ["v8_enable_pointer_compression_8gb = %s" % ("true" if self.options.v8_enable_pointer_compression_8gb else "false")]
 
 # TODO try #        if self.options.use_icu == "none":
 # TODO try #            gen_arguments += ["v8_enable_i18n_support = false"]
@@ -497,14 +537,11 @@ class V8Conan(ConanFile):
 
         # Not possible if doing monolithic
         # This must be specified.
+        # ?? if self.options.v8_monolithic:
         gen_arguments += [ "v8_use_external_startup_data = false"  ]
         # gen_arguments += [
             # "v8_use_external_startup_data = %s" % ("true" if self.options.use_external_startup_data else "false")
         # ]
-
-        gen_arguments += [
-            "v8_static_library = %s" % ("false" if self.options.shared else "true")
-        ]
 
         if self.info.settings.os == "Linux":
             toolchain_to_use = "//build/toolchain/conan/linux:%s_%s" % (self.info.settings.compiler, self.info.settings.arch)
@@ -527,6 +564,21 @@ class V8Conan(ConanFile):
 
         v8_source_root = os.path.join(self.source_folder, "v8")
 
+        # using the sample-config-generator approach
+        if False:
+            env = self._make_environment()
+            envvars = env.vars(self, scope="build")
+            with envvars.apply():
+                self.run("python --version")
+#                print(generator_call)
+#                self.run(generator_call)
+                num_parallel = build_jobs(self)
+
+                # Method to use the v8gen to create a config based on a sample
+                self.run("./tools/dev/v8gen.py x64.release.sample -- v8_generate_external_defines_header=true v8_enable_sandbox=false is_debug=true symbol_level=2 is_component_build=true v8_monolithic=false dcheck_always_on=true")
+                self.run(f"ninja -j {num_parallel} -C out.gn/x64.release.sample")
+            return
+
         if self.info.settings.os == "Linux":
             # TODO reenable after testing...
             # self._install_system_requirements_linux()
@@ -544,6 +596,7 @@ class V8Conan(ConanFile):
             args_gn_file = os.path.join(self.build_folder, "args.gn")
             with open(args_gn_file, "w") as f:
                 f.write("\n".join(args))
+                f.write("\n")   # blank line at the end
 
             mkdir(self, "chrome")
             with chdir(self, "chrome"):
@@ -572,26 +625,18 @@ class V8Conan(ConanFile):
                     src=os.path.join(self.build_folder, "gen", "include"),
                     keep_path=True)
 
-                self.run(f"ninja -v -j {num_parallel} -C {self.build_folder} v8_monolith")
+                if self.options.shared:
+                    self.run(f"ninja -v -j {num_parallel} -C {self.build_folder}")  # not sure what to specify here, so build all
+                else:
+                    self.run(f"ninja -v -j {num_parallel} -C {self.build_folder} v8_monolith")
 
 
     def package(self):
+        breakpoint()
         # licences
         copy(self, pattern="LICENSE*",
                 dst=os.path.join(self.package_folder, "licenses"),
                 src=os.path.join(self.build_folder, "v8"))
-
-        # linux static library
-        copy(self, pattern="*v8_monolith.a",
-                dst=os.path.join(self.package_folder, "lib"),
-                src=os.path.join(self.build_folder, "obj"),
-                keep_path=False)
-
-        # windows static library
-        copy(self, pattern="*v8_monolith.lib",
-                dst=os.path.join(self.package_folder, "lib"),
-                src=os.path.join(self.build_folder),    # TODO narrow the src to a subfolder
-                keep_path=False)
 
         # the normal headers
         copy(self, pattern="*.h",
@@ -604,18 +649,52 @@ class V8Conan(ConanFile):
         # eg inspector/Debugger.h
         copy(self, pattern="*.h",
             dst=os.path.join(self.package_folder, "include"),
+            # src=os.path.join(self.build_folder, "v8", "out.gn", "x64.release.sample", "gen", "include"),
             src=os.path.join(self.build_folder, "gen", "include"),
             keep_path=True)
 
         # we also need to keep icudata file
         copy(self, pattern="icudtl.dat",
             dst=os.path.join(self.package_folder, "res"),
-            src=self.build_folder,
-            keep_path=True)
+            # src=os.path.join(self.build_folder, "v8", "out.gn", "x64.release.sample"),
+            src=self.build_folder)
+
+        # copy the args.gn file, it might be useful to see the v8 args used to build
+        copy(self, pattern="args.gn",
+            dst=self.package_folder,
+            src=self.build_folder)
+
+        # FOR SAMPLE-BASED BUILD ... src=os.path.join(self.build_folder, "v8", "out.gn", "x64.release.sample", "obj"),
+
+        if self.settings.os == "Windows":
+            if self.options.shared:
+                breakpoint()
+            else:
+                # windows static library
+                copy(self, pattern="*v8_monolith.lib",
+                        dst=os.path.join(self.package_folder, "lib"),
+                        src=os.path.join(self.build_folder),
+                        keep_path=False)
+                breakpoint()
+        else:
+            if self.options.shared:
+                copy(self, pattern="lib*.so",
+                        dst=os.path.join(self.package_folder, "lib"),
+                        src=self.build_folder,
+                        keep_path=False)
+            else:
+                # linux static library (libv8_monolith.a)
+                copy(self, pattern="libv8_monolith.a",
+                        dst=os.path.join(self.package_folder, "lib"),
+                        src=os.path.join(self.build_folder, "obj"),
+                        keep_path=False)
 
 
     def package_info(self):
-        self.cpp_info.libs = ["v8_monolith"]
+        if self.options.shared:
+            self.cpp_info.libs = ["v8", "v8_libplatform"]
+        else:
+            self.cpp_info.libs = ["v8_monolith"]
 
         # Embedders must include v8-gn.h,
         # which will automatically happen if V8_GN_HEADER is defined

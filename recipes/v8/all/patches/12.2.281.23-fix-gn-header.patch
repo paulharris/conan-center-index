@@ -1,0 +1,31 @@
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -743,7 +743,7 @@
+   include_dirs = [
+     ".",
+     "include",
+-    "$target_gen_dir",
++    "$target_gen_dir/include",
+   ]
+ }
+ 
+@@ -929,7 +929,8 @@
+   visibility = [ ":*" ]
+ 
+   if (v8_generate_external_defines_header) {
+-    defines = [ "V8_GN_HEADER" ]
++    defines = enabled_external_v8_defines
++    defines += [ "V8_GN_HEADER" ]
+   } else {
+     defines = enabled_external_v8_defines
+   }
+@@ -985,7 +986,8 @@
+   visibility = [ ":*" ]
+ 
+   if (v8_generate_external_defines_header) {
+-    defines = [ "V8_GN_HEADER" ]
++    defines = enabled_external_cppgc_defines
++    defines += [ "V8_GN_HEADER" ]
+   } else {
+     defines = enabled_external_cppgc_defines
+   }
