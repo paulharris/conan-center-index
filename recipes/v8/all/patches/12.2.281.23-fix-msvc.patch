@@ -1,0 +1,29 @@
+Fix for MSVC17, it didn't like for (x;y;do { } while()) code,
+so wrap it in a lambda.
+
+--- a/v8/src/base/immediate-crash.h	2024-04-23 12:03:16.000000000 +0800
++++ b/src/base/immediate-crash.h	2024-04-25 20:29:00.167153100 +0800
+@@ -165,10 +165,10 @@
+ // __builtin_unreachable() hints to the compiler that this is noreturn and can
+ // be packed in the function epilogue.
+ #define IMMEDIATE_CRASH()     \
+-  ({                          \
++  ([](){                          \
+     WRAPPED_TRAP_SEQUENCE_(); \
+     __builtin_unreachable();  \
+-  })
++  })()
+ 
+ #else
+ 
+--- a/v8/src/compiler/turboshaft/assembler.h	2024-04-23 12:11:53.000000000 +0800
++++ b/src/compiler/turboshaft/assembler.h	2024-04-25 20:56:02.164210100 +0800
+@@ -639,7 +639,7 @@
+ //       ...
+ //     }
+ #define LABEL_BLOCK(label)     \
+-  for (; false; UNREACHABLE()) \
++  for (; false; ([]() { UNREACHABLE(); })()) \
+   label:
+ 
+ // EmitProjectionReducer ensures that projections are always emitted right after

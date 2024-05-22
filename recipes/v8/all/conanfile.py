@@ -11,7 +11,7 @@ from conan.tools.microsoft import check_min_vs, is_msvc_static_runtime, is_msvc,
 from conan.tools.scm import Version, Git
 
 # for source-from-tarball
-from conan.tools.files import get
+from conan.tools.files import unzip
 
 import os
 import re
@@ -160,18 +160,18 @@ class V8Conan(ConanFile):
     # False if not Windows, True if is Windows, will raise Exception if not supported Windows compiler
     def _uses_msvc_runtime(self):
         if self.settings.os == "Windows":
-            if self.settings.compiler == "Visual Studio":
-                if str(self.settings.compiler.version) not in ["15", "16", "17"]:
-                    raise ConanInvalidConfiguration("Only Visual Studio 15,16,17 is supported.")
-                return True
-            elif str(self.settings.compiler) == "msvc":
+            if str(self.settings.compiler) == "msvc":
                 if str(self.settings.compiler.version) not in ["191", "192", "193"]:
                     raise ConanInvalidConfiguration("Only msvc 191,192,193 is supported (VC 2017,2019,2022 -> 15,16,17 -> 191,192,193).")
                 return True
             # elif ...
             #   Add more compilers here, but if we aren't building with the Windows SDK then return false
+            elif str(self.settings.compiler) == "clang":
+                if str(self.settings.compiler.version) not in ["18"]:
+                    raise ConanInvalidConfiguration("Only clang 18 supported, had some trouble with clang-17")
+                return True
             else:
-                raise ConanInvalidConfiguration("Only 'msvc' and 'Visual Studio' compilers currently known to be supported - update recipe.")
+                raise ConanInvalidConfiguration("Only 'msvc' and 'clang' compilers currently known to be supported - update recipe.")
         else:
             return False
 
@@ -206,16 +206,7 @@ class V8Conan(ConanFile):
         if self.info.settings.os == "Windows":
             env.define("DEPOT_TOOLS_WIN_TOOLCHAIN", "0")
             # keep this in sync with _uses_msvc_runtime()
-            if str(self.info.settings.compiler) == "Visual Studio":
-                if str(self.info.settings.compiler.version) == "15":
-                    env.define("GYP_MSVS_VERSION", "2017")
-                elif str(self.info.settings.compiler.version) == "16":
-                    env.define("GYP_MSVS_VERSION", "2019")
-                elif str(self.info.settings.compiler.version) == "17":
-                    env.define("GYP_MSVS_VERSION", "2022")
-                else:
-                    raise ConanInvalidConfiguration("Only Visual Studio 15,16,17 is supported.")
-            elif str(self.info.settings.compiler) == "msvc":
+            if str(self.info.settings.compiler) == "msvc":
                 if str(self.info.settings.compiler.version) == "191": # "15":
                     env.define("GYP_MSVS_VERSION", "2017")
                 elif str(self.info.settings.compiler.version) == "192": # "16":
@@ -224,44 +215,22 @@ class V8Conan(ConanFile):
                     env.define("GYP_MSVS_VERSION", "2022")
                 else:
                     raise ConanInvalidConfiguration("Only msvc 191,192,193 is supported (VC 2017,2019,2022 -> 15,16,17 -> 191,192,193).")
+            elif str(self.settings.compiler) == "clang":
+                if str(self.settings.compiler.version) == "18":
+                    # this makes no sense... should be done different
+                    env.define("GYP_MSVS_VERSION", "2022")
+                else:
+                    raise ConanInvalidConfiguration("Clang confusion todo")
             else:
-                raise ConanInvalidConfiguration("Only 'msvc' and 'Visual Studio' compilers currently known to be supported - update recipe.")
+                raise ConanInvalidConfiguration("Only 'msvc' and 'clang' compilers currently known to be supported - update recipe.")
 
         if self.info.settings.os == "Macos" and self.gn_arch == "arm64":
             env.define("VPYTHON_BYPASS", "manually managed python not supported by chrome operations")
         return env
 
     def source(self):
-        if True:
-        # if False:
-            # NOTE: To make a new tar file:
-            #   cd ~/.conan2/p/v8WHATEVERHASH/s
-            #   tar cf /build/mx/v8-src-VERSION.NUM.tar .
-            get(self, "file:///build/mx/v8-src-{}.tar".format(self.version), strip_root=False)
-            return
-
-        # else, do the long and involved git method
-        git = Git(self)
-        depot_repo = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
-        git.clone(url=depot_repo, target="depot_tools", args=["--depth","1"])
-
-        # Note: switching source based on platform/compiler/etc is not recommended in source() as the configuration can change with the next build.
-        # however, the source is HUGE, so lets do this switch.
-        if self.info.settings.os == "Macos" and self.gn_arch == "arm64":
-            mkdir(self, "v8")
-            with chdir(self, "v8"):
-                self.run("echo \"mac-arm64\" > .cipd_client_platform")
-
-        env = self._make_environment()
-        envvars = env.vars(self, scope="build")
-        with envvars.apply():
-            # self.run("gclient")   -- does not appear to be necessary
-            self.run("fetch v8")
-
-            with chdir(self, "v8"):
-                self.run("git checkout {}".format(self.version))
-                self.run("gclient sync")
-                self.run("gclient sync -D")  # remove dependency folders that have been removed since last sync
+        # we get the source in build(), as it depends on the operating system
+        pass
 
     @property
     def gn_arch(self):
@@ -340,9 +309,11 @@ class V8Conan(ConanFile):
 
         # v8 12.1.x wanted to add this warning in the compiler flags,
         # but clang-17 didn't support it. .. TODO how to do version-lower-than
-        if "clang" in str(self.info.settings.compiler).lower() and self.settings.compiler.version == "17":
-            compiler_build_gn = os.path.join(v8_source_root, "build", "config", "compiler", "BUILD.gn")
-            replace_in_file( self, compiler_build_gn, "-Wno-thread-safety-reference-return", "")
+        if "clang" in str(self.info.settings.compiler).lower():
+            # needs to be a second if to avoid early-evaluation (gives an error about how 17 is not valid for msvc)
+            if self.settings.compiler.version == "17":
+                compiler_build_gn = os.path.join(v8_source_root, "build", "config", "compiler", "BUILD.gn")
+                replace_in_file( self, compiler_build_gn, "-Wno-thread-safety-reference-return", "")
 
 
     def _path_compiler_config(self):
@@ -423,6 +394,9 @@ class V8Conan(ConanFile):
             # AND includes the external startup data internally (I think)
             # "v8_monolithic = %s" % ("true" if self.options.v8_monolithic else "false"),
             # ALWAYS do monolithic for static builds, and always do component builds for shared builds
+            # TODO Windows wouldn't build component-shared (msvc: errors related to DLL+thread data)
+            #  and building monolithic-shared produced a static lib anyway.
+            #  So for now, Windows is static-only, while Linux can be shared.
             "v8_monolithic = {}".format("true" if not self.options.shared else "false"),
             "v8_static_library = {}".format("false" if self.options.shared else "true"),
 
@@ -481,10 +455,11 @@ class V8Conan(ConanFile):
         ]
 
 
+        # note: don't use True/False, we need text true/false for later
         is_clang = "true" if ("clang" in str(self.info.settings.compiler).lower()) else "false"
         gen_arguments += ["is_clang = " + is_clang]
 
-        if is_clang:
+        if is_clang == "true":
             gen_arguments += [
                     # Not needed in 12.2 ... 'find_bad_constructs = false',
 
@@ -559,7 +534,72 @@ class V8Conan(ConanFile):
         return gen_arguments
 
 
+    def generate(self):
+        # Note: This environment is not available in the source() method
+        env = self._make_environment()
+        envvars = env.vars(self, scope="build")
+        envvars.save_script("depot_env")
+
+
     def build(self):
+        breakpoint()
+        max_ram = os.getenv("CONAN_BUILD_MAX_RAM_GB")
+
+        if max_ram is None:
+            raise ConanInvalidConfiguration("Specify CONAN_BUILD_MAX_RAM_GB in the environment!")
+        max_ram = int(max_ram)
+        if max_ram <= 0:
+            raise ConanInvalidConfiguration("Specify CONAN_BUILD_MAX_RAM_GB in the environment - must be more than zero")
+
+        max_num_parallel = 0
+        num_parallel = build_jobs(self)
+
+        # Instead of doing this, set tools.build:jobs=20
+        if self.info.settings.build_type == "Debug":
+            # Debug builds can consume a LOT of ram, assume 2GB per job
+            max_num_parallel = max_ram/2
+        else:
+            # Guess release can use 1GB per compiler
+            max_num_parallel = max_ram
+
+        if num_parallel > max_num_parallel:
+            num_parallel = max_num_parallel
+
+
+        #### GET THE SOURCE ####
+        if True:
+        # if False:
+            # NOTE: To make a new tar file:
+            #   cd ~/.conan2/p/v8WHATEVERHASH/s
+            #   tar cf /build/mx/v8-src-VERSION.NUM.tar .
+            if self.info.settings.os == "Windows":
+                unzip(self, "m:/conan4/v8-src-{}.tar.gz".format(self.version), strip_root=False)
+            else:
+                unzip(self, "file:///build/mx/v8-src-{}.tar.gz".format(self.version), strip_root=False)
+        else:
+            # else, do the long and involved git method
+            git = Git(self)
+            depot_repo = "https://chromium.googlesource.com/chromium/tools/depot_tools.git"
+            git.clone(url=depot_repo, target="depot_tools", args=["--depth","1"])
+
+            # Note: switching source based on platform/compiler/etc is not recommended in source() as the configuration can change with the next build.
+            # however, the source is HUGE, so lets do this switch.
+            if self.info.settings.os == "Macos" and self.gn_arch == "arm64":
+                mkdir(self, "v8")
+                with chdir(self, "v8"):
+                    self.run("echo \"mac-arm64\" > .cipd_client_platform")
+
+            env = self._make_environment()
+            with env.vars(self).apply():
+                # self.run("gclient")   -- does not appear to be necessary
+                self.run("fetch v8")
+
+                with chdir(self, "v8"):
+                    self.run("git checkout {}".format(self.version))
+                    self.run("gclient sync")
+                    self.run("gclient sync -D")  # remove dependency folders that have been removed since last sync
+
+        # we have got the source ...
         apply_conandata_patches(self)
 
         v8_source_root = os.path.join(self.source_folder, "v8")
@@ -572,7 +612,6 @@ class V8Conan(ConanFile):
                 self.run("python --version")
 #                print(generator_call)
 #                self.run(generator_call)
-                num_parallel = build_jobs(self)
 
                 # Method to use the v8gen to create a config based on a sample
                 self.run("./tools/dev/v8gen.py x64.release.sample -- v8_generate_external_defines_header=true v8_enable_sandbox=false is_debug=true symbol_level=2 is_component_build=true v8_monolithic=false dcheck_always_on=true")
@@ -609,13 +648,10 @@ class V8Conan(ConanFile):
 
             generator_call = f"gn gen {self.build_folder}"
 
-            env = self._make_environment()
-            envvars = env.vars(self, scope="build")
-            with envvars.apply():
+            if True:
                 self.run("python --version")
                 print(generator_call)
                 self.run(generator_call)
-                num_parallel = build_jobs(self)
 
                 # not sure why in version 12, it couldn't find the v8-gn.h header
                 # so we will build it and then copy it into place for the rest of the build to find.
@@ -626,13 +662,12 @@ class V8Conan(ConanFile):
                     keep_path=True)
 
                 if self.options.shared:
-                    self.run(f"ninja -v -j {num_parallel} -C {self.build_folder}")  # not sure what to specify here, so build all
+                    self.run(f"ninja -j {num_parallel} -C {self.build_folder}")  # not sure what to specify here, so build all
                 else:
-                    self.run(f"ninja -v -j {num_parallel} -C {self.build_folder} v8_monolith")
+                    self.run(f"ninja -j {num_parallel} -C {self.build_folder} v8_monolith")
 
 
     def package(self):
-        breakpoint()
         # licences
         copy(self, pattern="LICENSE*",
                 dst=os.path.join(self.package_folder, "licenses"),
@@ -668,6 +703,7 @@ class V8Conan(ConanFile):
 
         if self.settings.os == "Windows":
             if self.options.shared:
+                print("TODO figure out what files to copy for this situation")
                 breakpoint()
             else:
                 # windows static library
@@ -675,7 +711,6 @@ class V8Conan(ConanFile):
                         dst=os.path.join(self.package_folder, "lib"),
                         src=os.path.join(self.build_folder),
                         keep_path=False)
-                breakpoint()
         else:
             if self.options.shared:
                 copy(self, pattern="lib*.so",

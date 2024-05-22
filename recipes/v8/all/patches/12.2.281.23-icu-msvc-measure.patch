@@ -1,0 +1,13 @@
+Pulled from a future ICU version, fails on MSVC 19
+
+--- a/third_party/icu/source/i18n/fmtable.cpp	2024-04-23 12:09:25.000000000 +0800
++++ b/third_party/icu/source/i18n/fmtable.cpp	2024-04-23 15:21:40.052556900 +0800
+@@ -56,7 +56,7 @@
+ // Return true if *a == *b.
+ static inline UBool objectEquals(const UObject* a, const UObject* b) {
+     // LATER: return *a == *b;
+-    return *((const Measure*) a) == *((const Measure*) b);
++    return *((const Measure*) a) == *b;
+ }
+ 
+ // Return a clone of *a.
