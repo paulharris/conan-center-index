@@ -192,7 +192,7 @@ class VtkConan(ConanFile):
 
     def _override_options_values(self, new_values):
         overridden = { opt : ["DEFAULT", "YES", "NO", "WANT", "DONT_WANT"] for opt in new_values }
-        self.options.update(overridden, new_values)
+        self.options.update(overridden)
 
 
 
