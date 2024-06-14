@@ -40,3 +40,6 @@ patches:
     - patch_file: "patches/9.3.0-fix-vtkQuadricDecimation-edge-counting.patch"
       patch_type: "conan"
       patch_description: "Improve edge-count performance in vtkQuadricDecimation"
+    - patch_file: "patches/9.3.0-fix-vtkTubeFilter-normals.patch"
+      patch_type: "conan"
+      patch_description: "Fix vtkTubeFilter normals"
