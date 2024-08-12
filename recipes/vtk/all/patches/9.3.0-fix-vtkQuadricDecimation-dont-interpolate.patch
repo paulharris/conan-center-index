@@ -1,0 +1,27 @@
+We dont want to interpolate pointdata, as our data is often IDs and other kinds of data
+that is not appropriate to interpolate.
+
+--- a/Filters/Core/vtkQuadricDecimation.cxx	2024-08-12 23:08:53.892256613 +0800
++++ b/Filters/Core/vtkQuadricDecimation.cxx	2024-08-12 23:11:09.431742435 +0800
+@@ -134,6 +134,13 @@
+     return;
+   }
+ 
++#if 0
++  We dont want to interpolate pointdata, as our data is often IDs and other kinds of data
++  that is not appropriate to interpolate.
++  Instead, dont touch the PointData, and the data of the surviving point in the merge will
++  remain as it was before untouched.
++  So the result is a lucky-dip rather than a nearest-neighbour map.
++
+   if (this->MapPointData || this->AttributeErrorMetric)
+   {
+     // calculate weights equivalent to projecting back to the initial edge and interpolating there
+@@ -172,6 +179,7 @@
+       dArray->SetTuple(ptId[0], res.data());
+     }
+   }
++#endif
+ 
+   points->SetPoint(ptId[0], x);
+ }

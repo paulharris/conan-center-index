@@ -40,3 +40,6 @@ patches:
     - patch_file: "patches/9.3.0-fix-vtkTubeFilter-normals.patch"
       patch_type: "conan"
       patch_description: "Fix vtkTubeFilter normals"
+    - patch_file: "patches/9.3.0-fix-vtkQuadricDecimation-dont-interpolate.patch"
+      patch_type: "conan"
+      patch_description: "vtkQuadricDecimation: Don't interpolate pointdata when decimating"
