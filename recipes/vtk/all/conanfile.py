@@ -1282,7 +1282,7 @@ class VtkConan(ConanFile):
                     "libxml2":           [True,  "libxml2/[>=2.12.5 <4]",       "libxml2::libxml2"  ],  # TODO conflict: xkbcommon (2.12.3), sub 2.12.4 had a security issue
 
                     "netcdf":            [False, "netcdf/[>=4.8.1]",            "netcdf::netcdf"    ],
-                    "nlohmannjson":      [False, "nlohmann_json/[>=3]",         "nlohmann_json::nlohman_json" ],
+                    "nlohmannjson":      [False, "nlohmann_json/[>=3]",         "nlohmann_json::nlohmann_json" ],
 
                     "ogg":               [False, "ogg/[>=1.3.5]",               "ogg::ogg"          ],
                     "opengl":            [False, "opengl/system",               "opengl::opengl"    ],
@@ -1356,7 +1356,7 @@ class VtkConan(ConanFile):
                     "libxml2":           [True,  "libxml2/[>=2.12.5 <4]",       "libxml2::libxml2"  ],  # TODO conflict: xkbcommon (2.12.3), sub 2.12.4 had a security issue
 
                     "netcdf":            [False, "netcdf/[>=4.8.1]",            "netcdf::netcdf"    ],
-                    "nlohmannjson":      [False, "nlohmann_json/[>=3]",         "nlohmann_json::nlohman_json" ],
+                    "nlohmannjson":      [False, "nlohmann_json/[>=3]",         "nlohmann_json::nlohmann_json" ],
 
                     "ogg":               [False, "ogg/[>=1.3.5]",               "ogg::ogg"          ],
                     "opengl":            [False, "opengl/system",               "opengl::opengl"    ],
