@@ -43,3 +43,6 @@ patches:
     - patch_file: "patches/9.3.0-fix-vtkQuadricDecimation-dont-interpolate.patch"
       patch_type: "conan"
       patch_description: "vtkQuadricDecimation: Don't interpolate pointdata when decimating"
+    - patch_file: "patches/9.3.0-fix-vtkGLTFDocumentLoaderInternals-json.patch"
+      patch_type: "conan"
+      patch_description: "vtkGLTFDocumentLoaderInternals: fix compile error related to json"

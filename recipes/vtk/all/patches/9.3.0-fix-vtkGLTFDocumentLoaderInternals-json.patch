@@ -1,0 +1,22 @@
+Small fix required related to change in JSON API
+
+--- a/IO/Geometry/vtkGLTFDocumentLoaderInternals.cxx	2023-11-14 07:37:21.000000000 +0800
++++ b/IO/Geometry/vtkGLTFDocumentLoaderInternals.cxx	2025-05-18 00:12:25.636612626 +0800
+@@ -1300,7 +1300,7 @@
+     // used to fill extensionsUsedByLoader.
+     if (!std::any_of(supportedExtensions.begin(), supportedExtensions.end(),
+           [&extensionRequiredByModel](
+-            const std::string& value) { return value == extensionRequiredByModel; }))
++            const std::string& value) { return value == extensionRequiredByModel.get<std::string>(); }))
+     {
+       vtkErrorWithObjectMacro(this->Self,
+         "glTF extension "
+@@ -1319,7 +1319,7 @@
+     }
+     if (std::any_of(supportedExtensions.begin(), supportedExtensions.end(),
+           [&extensionUsedByModel](
+-            const std::string& value) { return value == extensionUsedByModel; }))
++            const std::string& value) { return value == extensionUsedByModel.get<std::string>(); }))
+     {
+       extensionsUsedByLoader.push_back(extensionUsedByModel);
+     }
